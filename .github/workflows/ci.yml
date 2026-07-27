@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  # Keep in sync with `protobuf-java` version in example/gradle/libs.versions.toml.
+  # Compatibility: protoc 32.1 <-> protobuf-java 4.32.1
+  # Bindings generated with newer protoc compilers fail on older protobuf-java
+  # runtimes.
+  PROTOC_VERSION: "32.1"
+  RUST_TOOLCHAIN: "1.94.0"
+  # Godot binary versions. Keep these in sync with
+  # example/gradle/libs.versions.toml.
+  GODOT_VERSION: "4.6.3"
+  GODOT_KOTLIN_VERSION: "0.16.2-4.6.3"
+
+jobs:
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install protoc
+        run: |
+          mkdir -p "$HOME/.local/protoc"
+          curl -fsSL -o /tmp/protoc.zip \
+            "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+          unzip -q /tmp/protoc.zip -d "$HOME/.local/protoc"
+          echo "$HOME/.local/protoc/bin" >> "$GITHUB_PATH"
+
+      - name: Install protoc-gen-prost
+        uses: ./.github/actions/install-protoc-gen-prost
+        with:
+          rust-toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      # Build the protoc plugin and generate bindings with protoc.
+      - name: Generate example bindings
+        run: python3 example/generate.py
+
+      - name: cargo test
+        run: cargo test --workspace
+
+  test-interop:
+    name: cargo test (Godot/Kotlin interop)
+    runs-on: ubuntu-latest
+    # Best-effort: some Godot integration tests are flaky. Never blocks merging.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: interop
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Install protoc
+        run: |
+          mkdir -p "$HOME/.local/protoc"
+          curl -fsSL -o /tmp/protoc.zip \
+            "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+          unzip -q /tmp/protoc.zip -d "$HOME/.local/protoc"
+          echo "$HOME/.local/protoc/bin" >> "$GITHUB_PATH"
+
+      - name: Install protoc-gen-prost
+        uses: ./.github/actions/install-protoc-gen-prost
+        with:
+          rust-toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Cache Godot binaries
+        id: cache-godot-bins
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/godot-bin
+          key: godot-bin-linux-${{ env.GODOT_VERSION }}-godot-kotlin-${{ env.GODOT_KOTLIN_VERSION }}-v1
+
+      - name: Download Godot4 (vanilla)
+        if: steps.cache-godot-bins.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.local/godot-bin
+          curl -fsSL -o /tmp/godot4.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot4.zip -d /tmp/godot4
+          mv "/tmp/godot4/Godot_v${GODOT_VERSION}-stable_linux.x86_64" ~/.local/godot-bin/godot4
+
+      - name: Download godot-kotlin (Godot-Kotlin/JVM editor)
+        if: steps.cache-godot-bins.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.local/godot-bin
+          curl -fsSL -o /tmp/godot-kotlin.zip \
+            "https://github.com/utopia-rise/godot-kotlin-jvm/releases/download/${GODOT_KOTLIN_VERSION}/godot-kotlin-jvm_editor_linuxbsd_x86_64_release_${GODOT_KOTLIN_VERSION}.zip"
+          unzip -q /tmp/godot-kotlin.zip -d /tmp/godot-kotlin
+          mv /tmp/godot-kotlin/* ~/.local/godot-bin/godot-kotlin
+
+      - name: Put Godot binaries on PATH
+        run: |
+          chmod +x ~/.local/godot-bin/godot4 ~/.local/godot-bin/godot-kotlin
+          echo "$HOME/.local/godot-bin" >> "$GITHUB_PATH"
+
+      # Build the protoc plugin and generate bindings with protoc.
+      - name: Generate example bindings
+        run: python3 example/generate.py
+
+      - name: cargo test
+        run: cargo test --workspace

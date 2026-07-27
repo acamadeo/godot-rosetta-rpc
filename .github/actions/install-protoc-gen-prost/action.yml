@@ -1,0 +1,22 @@
+name: Install protoc-gen-prost
+description: Installs protoc-gen-prost via cargo install, cached by Rust toolchain version.
+
+inputs:
+  rust-toolchain:
+    description: Rust toolchain version used to key the cache
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Cache protoc-gen-prost
+      id: cache-protoc-gen-prost
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/bin/protoc-gen-prost
+        key: protoc-gen-prost-${{ runner.os }}-rust${{ inputs.rust-toolchain }}-v1
+
+    - name: Install protoc-gen-prost
+      if: steps.cache-protoc-gen-prost.outputs.cache-hit != 'true'
+      shell: bash
+      run: cargo install protoc-gen-prost --locked
