@@ -1,0 +1,8 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+// Not `Send + Sync`: implementations commonly hold a `Gd<T>` handle, and
+// Godot objects are inherently single-threaded.
+pub trait {{ type_name }} {
+{% for method in methods %}
+    fn {{ method.method_name }}(&self, request: {{ method.input_type }}) -> {{ method.output_type }};
+{% endfor %}
+}

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package rosetta.example;
+
+option java_package = "rosetta.example";
+option java_multiple_files = true;
+
+message CurrentTimeRequest {}
+
+message CurrentTimeResponse {
+  uint64 millis = 1;
+}
+
+message PingRequest {
+  string message = 1;
+}
+
+message PingResponse {
+  string message = 1;
+}
+
+// A simple time source, implemented in Rust in the example project.
+service Clock {
+  rpc CurrentTime(CurrentTimeRequest) returns (CurrentTimeResponse);
+}
+
+// Calls Clock, implemented in Kotlin in the example project — exercising the
+// aggregate ServiceFactory/Bootstrap outputs alongside Clock.
+service GameService {
+  rpc Ping(PingRequest) returns (PingResponse);
+}

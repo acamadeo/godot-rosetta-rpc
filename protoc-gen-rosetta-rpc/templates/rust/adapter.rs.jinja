@@ -1,0 +1,19 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+pub struct {{ type_name }}Adapter {
+    pub implementation: Box<dyn {{ type_name }}>,
+}
+
+impl godot_rosetta_rpc::ErasedAdapter for {{ type_name }}Adapter {
+    fn invoke(&self, method_id: &str, request_bytes: &[u8]) -> Result<Vec<u8>, godot_rosetta_rpc::RpcError> {
+        match method_id {
+{% for method in methods %}
+            "{{ method.proto_name }}" => {
+                let request = <{{ method.input_type }} as prost::Message>::decode(request_bytes)
+                    .map_err(|_| godot_rosetta_rpc::RpcError::Decode)?;
+                Ok(prost::Message::encode_to_vec(&self.implementation.{{ method.method_name }}(request)))
+            }
+{% endfor %}
+            _ => Err(godot_rosetta_rpc::RpcError::UnknownMethod),
+        }
+    }
+}

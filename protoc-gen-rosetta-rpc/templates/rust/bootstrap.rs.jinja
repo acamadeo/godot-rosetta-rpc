@@ -1,0 +1,81 @@
+// GENERATED CODE — do not edit. Aggregates every service compiled in this invocation.
+
+// `#[class(base=...)]` requires a bare identifier, not a qualified path, so
+// these need to be brought into scope rather than referenced inline.
+use godot::builtin::{GString, PackedByteArray, PackedStringArray};
+use godot::classes::{INode, Node};
+use godot::obj::{Base, WithBaseField as _};
+use godot::prelude::{GodotClass, godot_api};
+
+// The one hand-written seam: implement `ServiceImplementations` in your own
+// project (e.g. src/rpc_impls.rs, as a unit struct `AppServiceImplementations`)
+// and it will be picked up by `RustRuntime::bootstrap()` below. Override only
+// the services this language actually implements — every method defaults to
+// `None`, so a service nobody overrides here simply never gets registered
+// (see RpcRuntime.gd's duplicate-registration check for what happens if more
+// than one language overrides the same service).
+pub trait ServiceImplementations {
+{% for service in services %}
+    fn {{ service.factory_method_name }}(&self, _factory: &GeneratedServiceFactory) -> Option<Box<dyn {{ service.type_name }}>> {
+        None
+    }
+{% endfor %}
+}
+
+pub fn register(
+    registry: &mut godot_rosetta_rpc::ServiceRegistry,
+    rpc: godot_rosetta_rpc::RpcClient,
+    impls: &dyn ServiceImplementations,
+) {
+    let factory = GeneratedServiceFactory::new(rpc);
+{% for service in services %}
+    if let Some(implementation) = impls.{{ service.factory_method_name }}(&factory) {
+        registry.register(
+            "{{ service.proto_name }}",
+            Box::new({{ service.type_name }}Adapter { implementation }),
+        );
+    }
+{% endfor %}
+}
+
+#[derive(GodotClass)]
+#[class(base=Node)]
+pub struct RustRuntime {
+    base: Base<Node>,
+    registry: godot_rosetta_rpc::ServiceRegistry,
+}
+
+#[godot_api]
+impl INode for RustRuntime {
+    fn init(base: Base<Node>) -> Self {
+        Self {
+            base,
+            registry: godot_rosetta_rpc::ServiceRegistry::new(),
+        }
+    }
+}
+
+#[godot_api]
+impl RustRuntime {
+    #[func]
+    fn bootstrap(&mut self) {
+        let node = self.to_gd().upcast::<Node>();
+        let rpc = godot_rosetta_rpc::godot_support::bootstrap_rpc_client(node);
+        register(&mut self.registry, rpc, &crate::rpc_impls::AppServiceImplementations);
+    }
+
+    #[func]
+    fn invoke(
+        &self,
+        service_id: GString,
+        method_id: GString,
+        request_bytes: PackedByteArray,
+    ) -> PackedByteArray {
+        godot_rosetta_rpc::godot_support::dispatch_bytes(&self.registry, service_id, method_id, request_bytes)
+    }
+
+    #[func]
+    fn registered_service_ids(&self) -> PackedStringArray {
+        godot_rosetta_rpc::godot_support::service_ids(&self.registry)
+    }
+}

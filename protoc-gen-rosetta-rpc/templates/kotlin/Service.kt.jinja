@@ -1,0 +1,8 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+package {{ package }}
+
+interface {{ type_name }} {
+{% for method in methods %}
+    fun {{ method.method_name }}(request: {{ method.input_type }}): {{ method.output_type }}
+{% endfor %}
+}

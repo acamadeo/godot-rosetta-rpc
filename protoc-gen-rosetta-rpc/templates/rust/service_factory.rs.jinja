@@ -1,0 +1,16 @@
+// GENERATED CODE — do not edit. Aggregates every service compiled in this invocation.
+#[derive(Clone)]
+pub struct GeneratedServiceFactory {
+    rpc: godot_rosetta_rpc::RpcClient,
+}
+
+impl GeneratedServiceFactory {
+    pub fn new(rpc: godot_rosetta_rpc::RpcClient) -> Self {
+        Self { rpc }
+    }
+{% for service in services %}
+    pub fn {{ service.factory_method_name }}(&self) -> {{ service.type_name }}Client {
+        {{ service.type_name }}Client::new(self.rpc.clone())
+    }
+{% endfor %}
+}

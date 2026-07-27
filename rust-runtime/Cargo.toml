@@ -1,0 +1,17 @@
+[package]
+name = "godot-rosetta-rpc"
+description = "Handwritten Rust runtime (RpcMethodDescriptor, ServiceRegistry, RpcClient) for the godot-rosetta-rpc cross-language RPC framework."
+readme = "README.md"
+keywords = ["godot", "rpc", "protobuf", "gdextension"]
+categories = ["game-development"]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/example/godot-rosetta-rpc"
+
+[dependencies]
+prost = "0.14"
+godot = "0.5.4"
+
+[dev-dependencies]
+prost-types = "0.14"

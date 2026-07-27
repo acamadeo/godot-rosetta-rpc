@@ -1,0 +1,13 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+package {{ package }}
+
+import rosettarpc.Adapter
+
+class {{ type_name }}Adapter(private val implementation: {{ type_name }}) : Adapter {
+    override fun invoke(methodId: String, requestBytes: ByteArray): ByteArray = when (methodId) {
+{% for method in methods %}
+        "{{ method.proto_name }}" -> implementation.{{ method.method_name }}({{ method.input_type }}.parseFrom(requestBytes)).toByteArray()
+{% endfor %}
+        else -> throw IllegalArgumentException("unknown method: $methodId")
+    }
+}

@@ -1,0 +1,18 @@
+[package]
+name = "protoc-gen-rosetta-rpc"
+description = "Custom protoc plugin that generates cross-language RPC glue (interfaces, descriptors, clients, adapters) for the godot-rosetta-rpc framework."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+prost.workspace = true
+prost-types.workspace = true
+heck = "0.5"
+askama = "0.16"
+strum = { version = "0.28.0", features = ["derive"] }
+
+
+[dev-dependencies]
+tempfile = "3"

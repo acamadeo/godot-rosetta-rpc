@@ -1,0 +1,15 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+package {{ package }}
+
+import rosettarpc.RpcMethodDescriptor
+
+object {{ type_name }}Descriptors {
+{% for method in methods %}
+    val {{ method.const_name }} = RpcMethodDescriptor(
+        serviceId = "{{ proto_name }}",
+        methodId = "{{ method.proto_name }}",
+        requestParser = {{ method.input_type }}.parser(),
+        responseParser = {{ method.output_type }}.parser(),
+    )
+{% endfor %}
+}

@@ -1,0 +1,9 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+pub struct {{ type_name }}Descriptors;
+
+impl {{ type_name }}Descriptors {
+{% for method in methods %}
+    pub const {{ method.const_name }}: godot_rosetta_rpc::RpcMethodDescriptor<{{ method.input_type }}, {{ method.output_type }}> =
+        godot_rosetta_rpc::RpcMethodDescriptor::new("{{ proto_name }}", "{{ method.proto_name }}");
+{% endfor %}
+}

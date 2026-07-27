@@ -1,0 +1,19 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+#[derive(Clone)]
+pub struct {{ type_name }}Client {
+    rpc: godot_rosetta_rpc::RpcClient,
+}
+
+impl {{ type_name }}Client {
+    pub fn new(rpc: godot_rosetta_rpc::RpcClient) -> Self {
+        Self { rpc }
+    }
+}
+
+impl {{ type_name }} for {{ type_name }}Client {
+{% for method in methods %}
+    fn {{ method.method_name }}(&self, request: {{ method.input_type }}) -> {{ method.output_type }} {
+        self.rpc.call(&{{ type_name }}Descriptors::{{ method.const_name }}, request)
+    }
+{% endfor %}
+}

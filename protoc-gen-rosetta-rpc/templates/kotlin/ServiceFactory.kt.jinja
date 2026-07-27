@@ -1,0 +1,10 @@
+// GENERATED CODE — do not edit. Aggregates every service compiled in this invocation.
+package {{ package }}
+
+import rosettarpc.RpcClient
+
+class GeneratedServiceFactory(private val rpc: RpcClient) {
+{% for service in services %}
+    fun {{ service.factory_method_name }}(): {{ service.type_name }}Client = {{ service.type_name }}Client(rpc)
+{% endfor %}
+}

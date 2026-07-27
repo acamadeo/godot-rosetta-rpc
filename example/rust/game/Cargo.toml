@@ -1,0 +1,13 @@
+[package]
+name = "game"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+protobuf-gen = { path = "../protobuf-gen" }
+godot-rosetta-rpc = { path = "../../../rust-runtime" }
+prost.workspace = true
+godot.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]

@@ -1,0 +1,11 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+package {{ package }}
+
+import rosettarpc.RpcClient
+
+class {{ type_name }}Client(private val rpc: RpcClient) : {{ type_name }} {
+{% for method in methods %}
+    override fun {{ method.method_name }}(request: {{ method.input_type }}): {{ method.output_type }} =
+        rpc.call({{ type_name }}Descriptors.{{ method.const_name }}, request)
+{% endfor %}
+}

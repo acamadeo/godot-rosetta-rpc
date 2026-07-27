@@ -1,0 +1,12 @@
+[versions]
+godot-kotlin-jvm = "0.16.2-4.6.3"
+protobuf-java = "4.32.1"
+
+[libraries]
+godot-api-library-debug = { module = "com.utopia-rise:godot-api-library-debug", version.ref = "godot-kotlin-jvm" }
+godot-core-library-debug = { module = "com.utopia-rise:godot-core-library-debug", version.ref = "godot-kotlin-jvm" }
+protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf-java" }
+protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref = "protobuf-java" }
+
+[plugins]
+godot-kotlin-jvm = { id = "com.utopia-rise.godot-kotlin-jvm", version.ref = "godot-kotlin-jvm" }

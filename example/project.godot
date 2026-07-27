@@ -1,0 +1,15 @@
+; Engine configuration file for the godot-rosetta-rpc example project.
+; Minimal fixture project — proves the framework works end-to-end, not a
+; real game.
+
+config_version=5
+
+[application]
+
+config/name="godot-rosetta-rpc-example"
+config/features=PackedStringArray("4.5")
+
+
+[autoload]
+RpcRuntime="*res://RpcRuntime.gd"
+
