@@ -11,8 +11,7 @@ members = [
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
-# TODO: Set up the repository for this.
-repository = "https://github.com/example/godot-rosetta-rpc"
+repository = "https://github.com/acamadeo/godot-rosetta-rpc"
 
 # Centralized dependencies used across the project crates
 [workspace.dependencies]

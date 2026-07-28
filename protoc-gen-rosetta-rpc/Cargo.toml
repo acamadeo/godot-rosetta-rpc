@@ -1,6 +1,9 @@
 [package]
 name = "protoc-gen-rosetta-rpc"
 description = "Custom protoc plugin that generates cross-language RPC glue (interfaces, descriptors, clients, adapters) for the godot-rosetta-rpc framework."
+readme = "README.md"
+keywords = ["protobuf", "protoc-plugin", "codegen", "rpc", "godot"]
+categories = ["development-tools::build-utils", "command-line-utilities"]
 version.workspace = true
 edition.workspace = true
 license.workspace = true

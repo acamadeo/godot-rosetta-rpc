@@ -88,17 +88,8 @@ language's generator or runtime.
 
 ## Publishing status
 
-Not yet published. `rust-runtime/Cargo.toml` and
-`kotlin-runtime/build.gradle.kts` carry publish-ready metadata (description,
-license, repository, Maven coordinates), but crate-name availability on
-crates.io and Maven Central account/signing setup have not been verified — do
-that before running `cargo publish` / a Maven publish task for real.
-
-We also want to make the protoc-gen-rosetta-rpc cargo-installable. Unlike
-`protoc-gen-prost` (`cargo install`-able from crates.io),
-`protoc-gen-rosetta-rpc` must be built via `cargo build --manifest-path
-<tool>/Cargo.toml` and located by relative path, with `.exe`-suffix detection
-duplicated in every consumer's generation script (see this project's own
-`build_rpc_services.py`). Before publishing: either a documented
-`cargo install --path` story, or a crates.io release so `cargo install
-protoc-gen-rosetta-rpc` works the same way `protoc-gen-prost` does.
+| Tool / lib               | Status                    |
+| ------------------------ | ------------------------- |
+| `protoc-gen-rosetta-rpc` | ✅ Published on crates.io |
+| `rust-runtime`           | Unpublished               |
+| `kotlin-runtime`         | Unpublished               |
