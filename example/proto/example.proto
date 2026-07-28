@@ -19,13 +19,23 @@ message PingResponse {
   string message = 1;
 }
 
-// A simple time source, implemented in Rust in the example project.
+message ProfileRequest {}
+
+message ProfileResponse {
+  string message = 1;
+}
+
+// A simple time source, implemented in Rust. Does not call other services.
 service Clock {
   rpc CurrentTime(CurrentTimeRequest) returns (CurrentTimeResponse);
 }
 
-// Calls Clock, implemented in Kotlin in the example project — exercising the
-// aggregate ServiceFactory/Bootstrap outputs alongside Clock.
+// A simple profiler service, implemented in Rust. Calls Clock service.
+service Profiler {
+  rpc Profile(ProfileRequest) returns (ProfileResponse);
+}
+
+// A simple game service, implemented in Kotlin. Calls Clock service.
 service GameService {
   rpc Ping(PingRequest) returns (PingResponse);
 }

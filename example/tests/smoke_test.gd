@@ -26,17 +26,17 @@ func _encode_ping_request(message: String) -> PackedByteArray:
 	bytes.append_array(message_bytes)
 	return bytes
 
-func _test_rust_service(rpc_runtime: Node) -> void:
+func _test_clock_service(rpc_runtime: Node) -> void:
 	if not ClassDB.class_exists("RustRuntime"):
 		push_error("RustRuntime class not found — did the GDExtension load?")
 		quit(1)
 		return
 
-	var current_time_req := PackedByteArray()
-	var current_time_resp: PackedByteArray = rpc_runtime.invoke("Clock", "CurrentTime", current_time_req)
-	print("RpcRuntime.invoke('Clock', 'CurrentTime', ...) -> ", current_time_resp)
+	var request := PackedByteArray()
+	var response: PackedByteArray = rpc_runtime.invoke("Clock", "CurrentTime", request)
+	print("RpcRuntime.invoke('Clock', 'CurrentTime', ...) -> ", response)
 
-	if current_time_resp.is_empty():
+	if response.is_empty():
 		push_error("Clock.CurrentTime returned an empty response via RpcRuntime.gd")
 		quit(1)
 		return
@@ -44,16 +44,34 @@ func _test_rust_service(rpc_runtime: Node) -> void:
 	print("smoke_test OK: RpcRuntime.gd correctly routed a call to RustRuntime's Clock.")
 
 
-func _test_kotlin_service(rpc_runtime: Node) -> void:
+func _test_profiler_service(rpc_runtime: Node) -> void:
+	if not ClassDB.class_exists("RustRuntime"):
+		push_error("RustRuntime class not found — did the GDExtension load?")
+		quit(1)
+		return
+
+	var request := PackedByteArray()
+	var response: PackedByteArray = rpc_runtime.invoke("Profiler", "Profile", request)
+	print("RpcRuntime.invoke('Profiler', 'Profile', ...) -> ", response)
+
+	if response.is_empty():
+		push_error("Profiler.Profile returned an empty response via RpcRuntime.gd")
+		quit(1)
+		return
+
+	print("smoke_test OK: RpcRuntime.gd correctly routed a call to RustRuntime's Profiler.")
+
+
+func _test_game_service(rpc_runtime: Node) -> void:
 	if not rpc_runtime.has_service("GameService"):
 		print("smoke_test: no GameService route registered — skipping Kotlin integration check (needs the godot-kotlin binary; see ../../scripts/run_godot_tests.sh).")
 		return
 
-	var ping_req := _encode_ping_request("ping")
-	var ping_resp: PackedByteArray = rpc_runtime.invoke("GameService", "Ping", ping_req)
-	print("RpcRuntime.invoke('GameService', 'Ping', ...) -> ", ping_resp)
+	var request := _encode_ping_request("ping")
+	var response: PackedByteArray = rpc_runtime.invoke("GameService", "Ping", request)
+	print("RpcRuntime.invoke('GameService', 'Ping', ...) -> ", response)
 
-	if ping_resp.is_empty():
+	if response.is_empty():
 		push_error("GameService.Ping returned an empty response via RpcRuntime.gd")
 		quit(1)
 		return
@@ -72,6 +90,7 @@ func _initialize() -> void:
 		quit(1)
 		return
 
-	_test_rust_service(rpc_runtime)
-	_test_kotlin_service(rpc_runtime)
+	_test_clock_service(rpc_runtime)
+	_test_profiler_service(rpc_runtime)
+	_test_game_service(rpc_runtime)
 	quit(0)
