@@ -1,17 +1,23 @@
 # godot-rosetta-rpc
 
-The handwritten Rust runtime for the [godot-rosetta-rpc](../README.md) cross-language
-RPC framework: `RpcMethodDescriptor`, `ServiceRegistry`, `RpcClient` (Godot-free, unit
-testable with plain `cargo test`), plus a `godot_support` module of thin gdext-facing
-helper functions. Never depends on any project-specific generated code — see the
-parent README's "Why no dependency cycle" section.
+The Rust runtime for the [godot-rosetta-rpc](../README.md) cross-language
+RPC framework. This crates allows you to implement protobuf RPC services in Rust,
+making the services callable from any supported programming language in your Godot
+codebase. It also allows you to call services implemented
+in other languages from Rust.
 
-## Dependency versions
+This crate works in tandem with the protobuf compiler plugin
+[protoc-gen-rosetta-rpc](https://crates.io/crates/protoc-gen-rosetta-rpc),
+which generates language bindings for your custom RPC services. This crate primarily
+provides the Rust implementation of the generated types, e.g.
+`RpcMethodDescriptor`, `ServiceRegistry`, `RpcClient`.
 
-The `prost::Message` and `godot` types appear directly in this crate's public API.
-`prost` and `godot` versions live in `[workspace.dependencies]` in the workspace root
-`Cargo.toml`, so every crate in this workspace stays in lockstep automatically.
-However, since Cargo treats every pre-1.0 (`0.x`) release as its own incompatible major version,
-a consuming project pinned to a different version of either crate will be incompatible with this crate.
+It comes with a `godot_support` module, which integrates with Godot to provide
+handles to call RPC services from Rust.
 
-We will periodically bump the pinned version here and republish the crate, rather than widen the version requirement speculatively.
+## Installing
+
+```toml
+[dependencies]
+godot-rosetta-rpc = "0.1"
+```

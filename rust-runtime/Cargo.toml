@@ -4,14 +4,14 @@ description = "Handwritten Rust runtime (RpcMethodDescriptor, ServiceRegistry, R
 readme = "README.md"
 keywords = ["godot", "rpc", "protobuf", "gdextension"]
 categories = ["game-development"]
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
-repository = "https://github.com/example/godot-rosetta-rpc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
-prost = "0.14"
-godot = "0.5.4"
+prost.workspace = true
+godot.workspace = true
 
 [dev-dependencies]
-prost-types = "0.14"
+prost-types.workspace = true
