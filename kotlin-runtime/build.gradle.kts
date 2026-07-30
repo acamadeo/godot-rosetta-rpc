@@ -11,11 +11,14 @@
 // keeps it publishable/reusable across projects.
 
 plugins {
+  // When built standalone, the version comes from this module's own
+  // `settings.gradle.kts`.
   kotlin("jvm")
   `java-library`
+  id("com.vanniktech.maven.publish") version "0.37.0"
 }
 
-group = "io.github.godot-rosetta-rpc"
+group = "io.github.acamadeo"
 
 version = "0.1.0"
 
@@ -30,4 +33,30 @@ dependencies {
   // `api`, since this module exposes `com.google.protobuf.Message/Parser` in
   // its public API (RpcClient, RpcMethodDescriptor).
   api(libs.protobuf.java)
+}
+
+mavenPublishing {
+  publishToMavenCentral()
+  signAllPublications()
+
+  coordinates(group.toString(), "godot-rosetta-rpc", version.toString())
+
+  pom {
+    name.set("godot-rosetta-rpc")
+    description.set(
+      "Kotlin runtime (RpcMethodDescriptor, ServiceRegistry, RpcClient) for " +
+        "the godot-rosetta-rpc cross-language RPC framework."
+    )
+    url.set("https://github.com/acamadeo/godot-rosetta-rpc")
+    licenses {
+      license {
+        name.set("MIT")
+        url.set("https://github.com/acamadeo/godot-rosetta-rpc/blob/main/LICENSE")
+      }
+    }
+    developers {
+      developer { id.set("acamadeo") }
+    }
+    scm { url.set("https://github.com/acamadeo/godot-rosetta-rpc") }
+  }
 }

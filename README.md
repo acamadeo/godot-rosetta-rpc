@@ -88,8 +88,8 @@ language's generator or runtime.
 
 ## Publishing status
 
-| Root directory           | Status                                                         |
-| ------------------------ | -------------------------------------------------------------- |
-| `protoc-gen-rosetta-rpc` | ✅ Published - https://crates.io/crates/protoc-gen-rosetta-rpc |
-| `rust-runtime`           | ✅ Published - https://crates.io/crates/godot-rosetta-rpc      |
-| `kotlin-runtime`         | Unpublished                                                    |
+| Root directory           | Status                                                                              |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| `protoc-gen-rosetta-rpc` | ✅ Published - https://crates.io/crates/protoc-gen-rosetta-rpc                      |
+| `rust-runtime`           | ✅ Published - https://crates.io/crates/godot-rosetta-rpc                           |
+| `kotlin-runtime`         | ✅ Published - https://repo1.maven.org/maven2/io/github/acamadeo/godot-rosetta-rpc/ |

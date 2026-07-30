@@ -8,5 +8,7 @@ generated/
 gen/
 example/RpcRuntime.gd
 example/godot_kotlin_configuration.json
+hidden
 __pycache__
 *.jar
+!kotlin-runtime/gradle/wrapper/gradle-wrapper.jar

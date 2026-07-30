@@ -8,14 +8,14 @@ on:
   workflow_dispatch:
 
 env:
-  # Keep in sync with `protobuf-java` version in example/gradle/libs.versions.toml.
+  # Keep in sync with `protobuf-java` version in gradle/libs.versions.toml.
   # Compatibility: protoc 32.1 <-> protobuf-java 4.32.1
   # Bindings generated with newer protoc compilers fail on older protobuf-java
   # runtimes.
   PROTOC_VERSION: "32.1"
   RUST_TOOLCHAIN: "1.94.0"
   # Godot binary versions. Keep these in sync with
-  # example/gradle/libs.versions.toml.
+  # gradle/libs.versions.toml.
   GODOT_VERSION: "4.6.3"
   GODOT_KOTLIN_VERSION: "0.16.2-4.6.3"
 
