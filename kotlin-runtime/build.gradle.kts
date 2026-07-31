@@ -1,4 +1,4 @@
-// The handwritten Kotlin runtime for the godot-rosetta-rpc cross-language
+// The Kotlin runtime for the godot-rosetta-rpc cross-language
 // RPC framework — the Kotlin mirror of ../rust-runtime. A plain Kotlin/JVM
 // library (not the full com.utopia-rise.godot-kotlin-jvm app plugin, which
 // in this plugin version has no library mode — see

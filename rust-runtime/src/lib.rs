@@ -1,4 +1,4 @@
-//! Handwritten Rust runtime for the godot-rosetta-rpc cross-language RPC
+//! Rust runtime for the godot-rosetta-rpc cross-language RPC
 //! framework. `descriptor`, `registry`, `client`, and `error` are pure Rust —
 //! never touch a gdext type, and are unit-testable with plain `cargo test`
 //! regardless of whether a Godot engine is running. `godot_support` is the

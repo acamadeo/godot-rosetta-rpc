@@ -1,6 +1,6 @@
 # godot-rosetta-rpc (Kotlin runtime)
 
-The handwritten Kotlin runtime for the [godot-rosetta-rpc](../README.md) cross-language
+The Kotlin runtime for the [godot-rosetta-rpc](../README.md) cross-language
 RPC framework: `RpcMethodDescriptor`, `ServiceRegistry`, `RpcClient` (Godot-free, unit
 testable with plain JUnit/`kotlinc`), plus a `GodotSupport` object of thin gdext-facing
 helper functions. Never depends on any project-specific generated code — see the

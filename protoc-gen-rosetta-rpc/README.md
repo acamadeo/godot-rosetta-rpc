@@ -20,13 +20,6 @@ it's on `PATH`), which `protoc` can invoke as
 
 ## Usage
 
-NOTE: This tool does not currently support services spanning multiple proto
-packages. Each package requires a separate invocation of `protoc`.
-
-NOTE: Generating bindings in multiple languages typically requires multiple
-invocations of `protoc`, as `protoc` plugins can only output to 1 directory per
-invocation.
-
 To generate bindings for Rust:
 
 ```bash
@@ -44,6 +37,13 @@ protoc \
   --rosetta-rpc_out=lang=kotlin \
   -I proto proto/*.proto
 ```
+
+NOTE: This tool does not currently support services spanning multiple proto
+packages. Each package requires a separate invocation of `protoc`.
+
+NOTE: Generating bindings in multiple languages typically requires multiple
+invocations of `protoc`, as `protoc` plugins can only output to 1 directory per
+invocation.
 
 ## Supported languages
 
