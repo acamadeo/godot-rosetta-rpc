@@ -1,5 +1,10 @@
 # godot-rosetta-rpc
 
+[![crates.io - protoc-gen-rosetta-rpc](https://img.shields.io/crates/v/protoc-gen-rosetta-rpc.svg?label=protoc-gen-rosetta-rpc)](https://crates.io/crates/protoc-gen-rosetta-rpc)
+[![crates.io - godot-rosetta-rpc](https://img.shields.io/crates/v/godot-rosetta-rpc.svg?label=rust-runtime)](https://crates.io/crates/godot-rosetta-rpc)
+[![Maven Central - godot-rosetta-rpc](https://img.shields.io/maven-central/v/io.github.acamadeo/godot-rosetta-rpc.svg?label=kotlin-runtime)](https://repo1.maven.org/maven2/io/github/acamadeo/godot-rosetta-rpc/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A lightweight, in-process, cross-language framework for Godot projects that
 mix implementation languages. This project leverages
 [Protocol buffer services](https://protobuf.dev/programming-guides/proto3/#services)
@@ -22,6 +27,15 @@ Some benefits this tool can provide:
   performance-critical to be written in GDScript or C#? You can implement this logic
   in more performant languages like Rust, C++, or Go, and with `godot-rosetta-rpc`,
   you can have it easily interop with the rest of your game.
+
+## Table of contents
+
+- [Example](#example)
+- [Layout](#layout)
+- [Installing](#installing)
+- [Usage](#usage)
+- [Extending to a new language](#extending-to-a-new-language)
+- [Limitations / known issues](#limitations--known-issues)
 
 ## Example
 
@@ -191,11 +205,3 @@ language's generator or runtime.
 - **Limited to single-package-per invocation**: the tool fails when used on
   services that span multiple proto packages. The fix would involve keying
   aggregate output per-package.
-
-## Publishing status
-
-| Root directory           | Status                                                                              |
-| ------------------------ | ----------------------------------------------------------------------------------- |
-| `protoc-gen-rosetta-rpc` | ✅ Published - https://crates.io/crates/protoc-gen-rosetta-rpc                      |
-| `rust-runtime`           | ✅ Published - https://crates.io/crates/godot-rosetta-rpc                           |
-| `kotlin-runtime`         | ✅ Published - https://repo1.maven.org/maven2/io/github/acamadeo/godot-rosetta-rpc/ |
