@@ -5,28 +5,26 @@
 [![Maven Central - godot-rosetta-rpc](https://img.shields.io/maven-central/v/io.github.acamadeo/godot-rosetta-rpc.svg?label=kotlin-runtime)](https://repo1.maven.org/maven2/io/github/acamadeo/godot-rosetta-rpc/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A lightweight, in-process, cross-language framework for Godot projects that
-mix implementation languages. This project leverages
+A lightweight, in-process, cross-language framework for Godot projects that mix
+implementation languages. It uses
 [Protocol buffer services](https://protobuf.dev/programming-guides/proto3/#services)
-to define interfaces that can then be implemented by and called from supported
-languages within your Godot codebase.
+to define interfaces that can be implemented in one language and called from any
+other, within your Godot codebase.
 
-Note that although the title references 'RPC' (Remote procedure call), this framework
-is not meant for client-server networking. It merely re-uses an interface language
-used by such networking tools (like
-[gRPC](https://grpc.io/docs/what-is-grpc/core-concepts/#overview)) to define interfaces
-across language boundaries. The 'client' and 'server', in this case, are classes in
-your Godot codebase that may be written in different languages.
+The title references 'RPC' (remote procedure call) because it reuses the interface
+language of networking tools like
+[gRPC](https://grpc.io/docs/what-is-grpc/core-concepts/#overview) — however, this tool is not specifically for
+client-server networking. The 'client' and 'server' here are just classes in your
+Godot codebase that happen to be written in different languages.
 
 Some benefits this tool can provide:
 
 - **Promotes service-oriented architecture**: You can easily define many narrowly-scoped
   singleton services accessible to your entire Godot project from any language (e.g.
-  `SaveManager`, `Weather`, `HttpClient`, etc).
-- **Facilitates optimization**: Do you have any code that is too
-  performance-critical to be written in GDScript or C#? You can implement this logic
-  in more performant languages like Rust, C++, or Go, and with `godot-rosetta-rpc`,
-  you can have it easily interop with the rest of your game.
+  `SaveManager`, `WeatherSystem`, `HttpClient`, etc).
+- **Facilitates optimization**: Code that's too performance-critical for GDScript or C#
+  can be implemented in a faster language like Rust, C++, or Go, and still interop
+  easily with the rest of your game through `godot-rosetta-rpc`.
 
 ## Table of contents
 
@@ -95,29 +93,29 @@ class MyNode : Node2D() {
 }
 ```
 
-See the `example/` directory for a more fleshed-out example.
+See the [example/](example/) directory for a more fleshed-out example.
 
 ## Layout
 
-- `protoc-gen-rosetta-rpc/` - this is a custom `protoc` compiler plugin
+- [`protoc-gen-rosetta-rpc/`](protoc-gen-rosetta-rpc/) - this is a custom `protoc` compiler plugin
   that generates the language bindings for your defined services. This is
   a Rust binary, installable through `cargo`.
 
 - Language runtimes - these are small language-specific libraries that
-  do stuff. These libraries offer a similar interface, including `RpcClient`,
-  `RpcMethodDescriptor`, `ServiceRegistry`, and a factory method that interfaces
-  with Godot.
-  - `rust-runtime/` - Rust language runtime, available as the Cargo package
+  bridge the gap between your generated RPC service code and Godot. These libraries
+  offer a similar interface, including `RpcClient`, `RpcMethodDescriptor`,
+  `ServiceRegistry`, and a factory method that interfaces with Godot.
+  - [`rust-runtime/`](rust-runtime/) - Rust language runtime, available as the Cargo package
     `godot-rosetta-rpc`.
-  - `kotlin-runtime/` - Kotlin language runtime, available as Gradle module
+  - [`kotlin-runtime/`](kotlin-runtime/) - Kotlin language runtime, available as Gradle module
     `io.github.acamadeo:godot-rosetta-rpc`.
 
-- `godot/RpcRuntime.gd` - an autoload script written in GDScript that intercepts
+- [`godot/RpcRuntime.gd`](godot/RpcRuntime.gd) - an autoload script written in GDScript that intercepts
   service requests and delegates them to the proper language runtime. This is
   the only autoload `godot-rosetta-rpc` requires. It can be installed into your
   Godot project through `install/install.py`.
 
-- `example/` — a minimal fixture project, showcasing the whole pipeline
+- [`example/`](example/) - a minimal fixture project, showcasing the whole pipeline
   end-to-end: a `Clock` service implemented in Rust, called by a
   `GameService` implemented in Kotlin and a `Profiler` service implemented in
   Rust.
@@ -154,21 +152,28 @@ See the `example/` directory for a more fleshed-out example.
     ```
 
 1.  Implement each RPC service. Each `service Foo {}` from your proto will be exposed
-    as a `interface Foo {}`, which can be implemented anywhere in your codebase. Within
+    as an `interface Foo {}`, which can be implemented anywhere in your codebase. Within
     a single service, every method must be implemented in the same language.
 
 1.  Link the service implementation through a `rpcimpls` module. This involves
     implementing the `ServiceImplementations` interface, which tells the language
     runtime and, ultimately, `RpcRuntime.gd` which services are implemented in which
-    languages.
+    languages:
 
-1.  Call the RPC service. If you wish to call an RPC service from a Godot `Node`, you can
-    do so by constructing a `GeneratedServiceFactory` with an `RpcClient`. It provides methods
-    to access and call each of your defined RPC services.
+    ```rust
+    impl ServiceImplementations for AppServiceImplementations {
+      fn rngService(&self, factory: &GeneratedServiceFactory) -> Option<Box<dyn RngService>> {
+        Some(Box::new(RngServiceImpl::new(factory.clone())))
+      }
+    }
+    ```
 
-    If you wish to call from an RPC service implementation, you can pass
-    `GeneratedServiceFactory` to your implementation and use it in the same way to invoke
-    other services.
+1.  Call the RPC service. To call an RPC service from a Godot `Node`, construct a
+    `GeneratedServiceFactory` with an `RpcClient`; it provides methods to access and
+    call each of your defined RPC services.
+
+    To call one service from another service, pass the `GeneratedServiceFactory` into the
+    calling service's implementation and use it the same way.
 
 See each language runtime's README with more specific instructions on how to use
 `godot-rosetta-rpc` within that language:
@@ -183,25 +188,24 @@ See each language runtime's README with more specific instructions on how to use
 This involves:
 
 1.  Having a standard protobuf code generator for that language (message types only).
-2.  Adding a small runtime library implementing `RpcMethodDescriptor`,
+1.  Adding a small runtime library implementing `RpcMethodDescriptor`,
     `ServiceRegistry`, `RpcClient`, mirroring `rust-runtime`/`kotlin-runtime`.
-3.  Adding a new `LanguageGenerator` implementation + Askama template set in
+1.  Adding a new `LanguageGenerator` implementation + Askama template set in
     `protoc-gen-rosetta-rpc/templates/<language>/`.
+1.  Updating `RpcRuntime.gd` to bootstrap the language runtime, and register the
+    services implemented in that language.
 
-No changes are required to `.proto` definitions, `RpcRuntime.gd`, or any other
-language's generator or runtime.
+No changes are required to `.proto` definitions or any other language's generator
+or runtime.
 
 ## Limitations / known issues
 
-- **No naming-collision detection.** The plugin has everything needed
-  (`TypeResolver` in `ir.rs`) to detect a service name colliding with an
-  existing message/enum name in the same proto package, but doesn't check it --
-  the failure mode is a confusing downstream Rust/Kotlin compile error rather
-  than a clear `protoc`-level error. Worth a validation pass in
-  `generator.rs`/`ir.rs` that returns a `CodeGeneratorResponse.error` on
-  collision, plus documenting _why_ this is possible (Kotlin glue reuses the
-  literal proto package as its own package).
+- **No naming-collision detection.** If a service name collides with an existing
+  message/enum name in the same proto package, `protoc` won't catch it — you'll
+  instead see a confusing compile error in the generated Rust/Kotlin code, rather
+  than a clear `protoc`-level error. (The plugin already has what it needs to detect
+  this via `TypeResolver` in `ir.rs`; it just doesn't check yet.)
 
 - **Limited to single-package-per invocation**: the tool fails when used on
-  services that span multiple proto packages. The fix would involve keying
-  aggregate output per-package.
+  services that span multiple proto packages. (Fixing this would involve keying
+  aggregate output per-package.)
