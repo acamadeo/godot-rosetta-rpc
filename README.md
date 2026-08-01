@@ -185,7 +185,12 @@ See each language runtime's README with more specific instructions on how to use
 
 ## Extending to a new language
 
-This involves:
+Currently, the following languages are supported:
+
+- Rust
+- Kotlin
+
+Adding support for a new language involves:
 
 1.  Having a standard protobuf code generator for that language (message types only).
 1.  Adding a small runtime library implementing `RpcMethodDescriptor`,

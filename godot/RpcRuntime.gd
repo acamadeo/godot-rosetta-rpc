@@ -8,7 +8,7 @@ extends Node
 # Where to search for `KotlinRuntime.gdj`. This assumes the Kotlin project uses the
 # following path defined in `build.gradle.kts`.
 # ```
-# registrationFileBaseDir.set(projectDir.resolve("kotlin/gdj"))
+# registrationFilesDirectory.set(projectDir.resolve("kotlin/gdj"))
 # ```
 const KOTLIN_GDJ_SEARCH_ROOT := "res://kotlin/gdj"
 
