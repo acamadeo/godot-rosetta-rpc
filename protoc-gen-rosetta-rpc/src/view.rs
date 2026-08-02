@@ -26,6 +26,9 @@ pub struct ServiceView {
     /// in both languages, so this currently just equals `proto_name`, but is
     /// kept distinct in case a future language needs different casing).
     pub type_name: String,
+    /// The name used when *referencing* the service as an interface/trait
+    /// type. Equals `type_name` for Rust/Kotlin and `I{type_name}` in C#.
+    pub interface_name: String,
     /// Language-cased "factory method" / accessor name for this service:
     /// snake_case for Rust, camelCase for Kotlin (e.g. "game_service" /
     /// "gameService").

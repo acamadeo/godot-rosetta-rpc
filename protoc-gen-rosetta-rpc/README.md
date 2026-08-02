@@ -8,11 +8,7 @@ for exactly what it generates.
 
 ## Installing
 
-    cargo install --path protoc-gen-rosetta-rpc --locked
-
-or, without cloning first:
-
-    cargo install --git https://github.com/acamadeo/godot-rosetta-rpc protoc-gen-rosetta-rpc --locked
+    cargo install protoc-gen-rosetta-rpc
 
 This installs a `protoc-gen-rosetta-rpc` binary to `~/.cargo/bin` (make sure
 it's on `PATH`), which `protoc` can invoke as
@@ -26,6 +22,15 @@ To generate bindings for Rust:
 protoc \
   --plugin=protoc-gen-rosetta-rpc=$(which protoc-gen-rosetta-rpc) \
   --rosetta-rpc_out=lang=rust,message_crate=my_messages:out/dir \
+  -I proto proto/*.proto
+```
+
+To generate bindings for C#:
+
+```bash
+protoc \
+  --plugin=protoc-gen-rosetta-rpc=$(which protoc-gen-rosetta-rpc) \
+  --rosetta-rpc_out=lang=csharp \
   -I proto proto/*.proto
 ```
 
@@ -48,6 +53,7 @@ invocation.
 ## Supported languages
 
 - Rust
+- C#
 - Kotlin
 
 See the parent README's "Extending to a new language" section for how to

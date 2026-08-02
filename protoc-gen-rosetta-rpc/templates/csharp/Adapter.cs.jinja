@@ -1,0 +1,24 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+namespace {{ package }};
+
+using System;
+using Google.Protobuf;
+using RosettaRpc;
+
+public class {{ type_name }}Adapter : IAdapter
+{
+    private readonly {{ interface_name }} _implementation;
+
+    public {{ type_name }}Adapter({{ interface_name }} implementation)
+    {
+        _implementation = implementation;
+    }
+
+    public byte[] Invoke(string methodId, byte[] requestBytes) => methodId switch
+    {
+{% for method in methods %}
+        "{{ method.proto_name }}" => _implementation.{{ method.method_name }}({{ method.input_type }}.Parser.ParseFrom(requestBytes)).ToByteArray(),
+{% endfor %}
+        _ => throw new ArgumentException($"unknown method: {methodId}"),
+    };
+}

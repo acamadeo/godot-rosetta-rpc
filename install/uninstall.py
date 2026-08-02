@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Reverses install.py: deletes RpcRuntime.gd from a target Godot project and
-removes its autoload registration from that project's project.godot.
+Reverses install.py: deletes RpcRuntime.gd from a target Godot project,
+removes its autoload registration from that project's project.godot, and
+removes the [rosetta_rpc] section.
 """
 
 import argparse
 import re
 from pathlib import Path
 
-from util import read_autoload_value, AUTOLOAD_KEY
+from util import read_autoload_value, remove_config_section, AUTOLOAD_KEY
 
 
 # Deletes `RpcRuntime.gd` file (wherever specified in `project.godot`), and
@@ -19,7 +20,7 @@ def uninstall(target_project: Path) -> None:
         print(f"No project.godot found at {project_godot}; nothing to do.")
         return
 
-    existing = read_autoload_value(project_godot, AUTOLOAD_KEY)
+    existing = read_autoload_value(project_godot, "autoload", AUTOLOAD_KEY)
     if existing is None:
         print(f"No '{AUTOLOAD_KEY}' autoload found in {project_godot}; nothing to do.")
         return
@@ -33,6 +34,9 @@ def uninstall(target_project: Path) -> None:
 
     _remove_autoload(project_godot, AUTOLOAD_KEY)
     print(f"Removed autoload '{AUTOLOAD_KEY}' from {project_godot}")
+
+    remove_config_section(project_godot, "rosetta_rpc")
+    print(f"Removed [rosetta_rpc] section from {project_godot}")
 
 
 

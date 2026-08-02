@@ -1,12 +1,14 @@
 //! Smoke test wrapping around `example/tests/smoke_test.gd`. This primarily
 //! sets up the smoke test, and is written in Rust so it can run in `cargo test`.
 //!
-//! Finds the appropriate `godot` binary to run the GDScript test. Ranked
-//! preference:
-//!  1. Godot-Kotlin (must be in PATH as `godot-kotlin`)
-//!     - Compatible with Kotlin and GDExtension (Rust)
-//!  2. Godot (must be in PATH as `godot` or `godot4`)
-//!     - Compatible with GDExtension (Rust)
+//! Finds every capable `godot` binary on PATH and runs the GDScript test
+//! once per binary found:
+//!  - Godot-Kotlin (`godot-kotlin`) — compatible with Kotlin and GDExtension
+//!    (Rust). Exercises the Kotlin (GameService) checks.
+//!  - Godot .NET/Mono (`godot-mono`) — compatible with C# and GDExtension
+//!    (Rust). Exercises the C# (Achievements) checks.
+//!  - Vanilla Godot (`godot` or `godot4`) — compatible with GDExtension
+//!    (Rust) only.
 
 use std::env::{split_paths, var_os};
 use std::fs::metadata;
@@ -101,11 +103,12 @@ fn godot_smoke_test() {
         return;
     };
     let godot_kotlin_bin = find_on_path("godot-kotlin");
+    let godot_mono_bin = find_on_path("godot-mono");
 
     let framework_root = framework_root();
     let example_dir = example_dir();
 
-    // Build protoc plugin that generates Rust/Kotlin service bindings.
+    // Build protoc plugin that generates Rust/Kotlin/C# service bindings.
     run(&format!(
         "cargo build -p protoc-gen-rosetta-rpc --manifest-path {}",
         framework_root.join("Cargo.toml").display()
@@ -123,28 +126,45 @@ fn godot_smoke_test() {
         framework_root.join("Cargo.toml").display()
     ));
 
-    let bin_to_use = match &godot_kotlin_bin {
-        Some(bin) => {
-            eprintln!(
-                "godot_smoke_test: using '{}' — Kotlin integration will be exercised in-process.",
-                bin.display()
-            );
-            // Build example/ Kotlin source.
-            run_gradle(&["build"], &example_dir);
-            bin
-        }
-        None => {
-            eprintln!(
-                "godot_smoke_test: using '{}' (no godot-kotlin on PATH — Kotlin integration check will be skipped).",
-                godot_bin.display()
-            );
-            &godot_bin
-        }
-    };
+    // Each capable binary gets its own full smoke-test run, as some languages
+    // are incompatible with each other (e.g. Kotlin + C#).
+    let mut runs: Vec<&Path> = Vec::new();
 
-    run(&format!(
-        "{} --headless --path {} --script res://tests/smoke_test.gd",
-        bin_to_use.display(),
-        example_dir.display()
-    ));
+    if let Some(bin) = &godot_kotlin_bin {
+        eprintln!(
+            "godot_smoke_test: building Kotlin source, will run with '{}' — Kotlin integration will be exercised in-process.",
+            bin.display()
+        );
+        run_gradle(&["build"], &example_dir);
+        runs.push(bin);
+    }
+
+    if let Some(bin) = &godot_mono_bin {
+        eprintln!(
+            "godot_smoke_test: building C# source, will run with '{}' — C# integration will be exercised in-process.",
+            bin.display()
+        );
+        run(&format!(
+            "dotnet build {}",
+            example_dir.join("rosetta-rpc-example.csproj").display()
+        ));
+        runs.push(bin);
+    }
+
+    if runs.is_empty() {
+        eprintln!(
+            "godot_smoke_test: using '{}' (no godot-kotlin/godot-mono on PATH — Kotlin/C# integration checks will be skipped).",
+            godot_bin.display()
+        );
+        runs.push(&godot_bin);
+    }
+
+    // Run smoke_test.gd on all the Godot binaries we have.
+    for bin in runs {
+        run(&format!(
+            "{} --headless --path {} --script res://tests/smoke_test.gd",
+            bin.display(),
+            example_dir.display()
+        ));
+    }
 }

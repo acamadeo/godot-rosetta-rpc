@@ -1,0 +1,29 @@
+<Project Sdk="Godot.NET.Sdk/4.6.3">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Example</RootNamespace>
+    <Nullable>enable</Nullable>
+    <!-- Set to true to include third-party NuGet dependencies like
+         Google.Protobuf, which the engine does not provide. -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../csharp-runtime/GodotRosettaRpc.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Exclude other languages' build artifacts. -->
+    <Compile Remove="bin/**/*.cs" />
+    <Compile Remove="build/**/*.cs" />
+    <Compile Remove="rust/**/*.cs" />
+    <Compile Remove="kotlin/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Keep in sync with PROTOC_VERSION in ci.yml: protoc 32.1 -->
+    <PackageReference Include="Google.Protobuf" Version="3.32.1" />
+  </ItemGroup>
+
+</Project>

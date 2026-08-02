@@ -1,0 +1,19 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+namespace {{ package }};
+
+using RosettaRpc;
+
+public class {{ type_name }}Client : {{ interface_name }}
+{
+    private readonly RpcClient _rpc;
+
+    public {{ type_name }}Client(RpcClient rpc)
+    {
+        _rpc = rpc;
+    }
+
+{% for method in methods %}
+    public {{ method.output_type }} {{ method.method_name }}({{ method.input_type }} request) =>
+        _rpc.Call({{ type_name }}Descriptors.{{ method.const_name }}, request);
+{% endfor %}
+}

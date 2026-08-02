@@ -1,0 +1,18 @@
+// GENERATED CODE — do not edit. Aggregates every service compiled in this invocation.
+namespace {{ package }};
+
+using RosettaRpc;
+
+public class GeneratedServiceFactory
+{
+    private readonly RpcClient _rpc;
+
+    public GeneratedServiceFactory(RpcClient rpc)
+    {
+        _rpc = rpc;
+    }
+
+{% for service in services %}
+    public {{ service.type_name }}Client {{ service.factory_method_name }}() => new {{ service.type_name }}Client(_rpc);
+{% endfor %}
+}

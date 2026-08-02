@@ -7,6 +7,8 @@
 //!   service interfaces/descriptors/clients/adapters live, so they mirror the
 //!   source `.proto` package instead of inventing their own namespace?
 
+use heck::ToUpperCamelCase;
+
 use crate::ir::FileInfo;
 
 /// Resolves a message's fully-qualified proto name to the Rust path of its
@@ -66,6 +68,30 @@ fn default_outer_classname(full_name: &str) -> String {
         .to_string()
 }
 
+/// Resolves a proto package to its C#/protoc-csharp-codegen namespace: the
+/// file's explicit `csharp_namespace` option if set, else each dot-segment
+/// PascalCased and rejoined (protoc's own default-namespace algorithm),
+/// e.g. "rosetta.example" -> "Rosetta.Example".
+pub fn csharp_namespace(file_info: &FileInfo) -> String {
+    file_info.csharp_namespace.clone().unwrap_or_else(|| {
+        file_info
+            .package
+            .split('.')
+            .map(|s| s.to_upper_camel_case())
+            .collect::<Vec<_>>()
+            .join(".")
+    })
+}
+
+/// Resolves a message's fully-qualified proto name to its C# qualified
+/// class name. No `java_multiple_files`/`java_outer_classname`-style
+/// branching needed — protoc's C# generator always emits one top-level
+/// class per message.
+pub fn csharp_message_path(file_info: &FileInfo, full_name: &str) -> String {
+    let type_name = full_name.rsplit('.').next().unwrap_or(full_name);
+    format!("{}.{}", csharp_namespace(file_info), type_name)
+}
+
 /// Directory path (relative to the plugin's output root) that generated glue
 /// for a given proto package should live under, mirroring the package the
 /// way `protoc`'s own generators mirror packages for message code — e.g.
@@ -101,6 +127,7 @@ mod tests {
             java_package: Some("rosetta.example".to_string()),
             java_multiple_files: true,
             java_outer_classname: None,
+            csharp_namespace: None,
         };
         assert_eq!(
             kotlin_message_path(&info, "rosetta.example.CurrentTimeRequest"),
@@ -115,10 +142,44 @@ mod tests {
             java_package: Some("rosetta.example".to_string()),
             java_multiple_files: false,
             java_outer_classname: Some("ExampleProto".to_string()),
+            csharp_namespace: None,
         };
         assert_eq!(
             kotlin_message_path(&info, "rosetta.example.CurrentTimeRequest"),
             "rosetta.example.ExampleProto.CurrentTimeRequest"
+        );
+    }
+
+    #[test]
+    fn csharp_namespace_defaults_to_pascal_cased_package() {
+        let info = FileInfo {
+            package: "rosetta.example".to_string(),
+            csharp_namespace: None,
+            ..Default::default()
+        };
+        assert_eq!(csharp_namespace(&info), "Rosetta.Example");
+    }
+
+    #[test]
+    fn csharp_namespace_honors_explicit_override() {
+        let info = FileInfo {
+            package: "rosetta.example".to_string(),
+            csharp_namespace: Some("Custom.Ns".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(csharp_namespace(&info), "Custom.Ns");
+    }
+
+    #[test]
+    fn csharp_message_path_mirrors_namespace() {
+        let info = FileInfo {
+            package: "rosetta.example".to_string(),
+            csharp_namespace: None,
+            ..Default::default()
+        };
+        assert_eq!(
+            csharp_message_path(&info, "rosetta.example.CurrentTimeRequest"),
+            "Rosetta.Example.CurrentTimeRequest"
         );
     }
 

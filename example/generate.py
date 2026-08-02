@@ -3,8 +3,10 @@
 
   1. prost message types -> rust/protobuf-gen/src/gen/
   2. Java + Kotlin message types -> kotlin/generated/{java,kotlin}/
-  3. godot-rosetta-rpc glue (Rust, implementing Clock) -> rust/game/src/generated/
-  4. godot-rosetta-rpc glue (Kotlin, implementing GameService) -> kotlin/generated/
+  3. C# message types -> csharp/generated/messages/
+  4. godot-rosetta-rpc glue (Rust, implementing Clock) -> rust/game/src/generated/
+  5. godot-rosetta-rpc glue (Kotlin, implementing GameService) -> kotlin/generated/rpc/
+  6. godot-rosetta-rpc glue (C#, implementing Achievements) -> csharp/generated/rpc/
 
 Requires `protoc`, `protoc-gen-prost` (`cargo install protoc-gen-prost`), and a
 built `protoc-gen-rosetta-rpc` (built here on demand via `cargo build`) all
@@ -24,8 +26,10 @@ PROTO_ROOT = EXAMPLE_PROJECT_ROOT / "proto"
 OUT_RUST_MESSAGES = EXAMPLE_PROJECT_ROOT / "rust/protobuf-gen/src/gen"
 OUT_JAVA_MESSAGES = EXAMPLE_PROJECT_ROOT / "kotlin/generated/java"
 OUT_KOTLIN_MESSAGES = EXAMPLE_PROJECT_ROOT / "kotlin/generated/kotlin"
+OUT_CSHARP_MESSAGES = EXAMPLE_PROJECT_ROOT / "csharp/generated/messages"
 OUT_RUST_RPC = EXAMPLE_PROJECT_ROOT / "rust/game/src/generated"
 OUT_KOTLIN_RPC = EXAMPLE_PROJECT_ROOT / "kotlin/generated/rpc"
+OUT_CSHARP_RPC = EXAMPLE_PROJECT_ROOT / "csharp/generated/rpc"
 
 PROTOC = "protoc"
 
@@ -52,8 +56,16 @@ def uninstall_rpc_runtime() -> None:
 
 
 def install_rpc_runtime() -> None:
+    # Explicitly pass `OUT_CSHARP_RPC` so RpcRuntime.gd knows where to find the
+    # CSharpRuntime node.
+    csharp_rpc_root = OUT_CSHARP_RPC.relative_to(EXAMPLE_PROJECT_ROOT).as_posix()
     subprocess.run(
-        [sys.executable, str(INSTALL_PY), str(EXAMPLE_PROJECT_ROOT)],
+        [
+            sys.executable,
+            str(INSTALL_PY),
+            str(EXAMPLE_PROJECT_ROOT),
+            f"--csharp-rpc-root={csharp_rpc_root}",
+        ],
         check=True,
     )
 
@@ -102,6 +114,19 @@ def generate_kotlin_messages(files: list[Path]) -> None:
     )
 
 
+def generate_csharp_messages(files: list[Path]) -> None:
+    subprocess.run(
+        [
+            PROTOC,
+            f"--csharp_out={OUT_CSHARP_MESSAGES}",
+            "-I",
+            str(PROTO_ROOT),
+            *[str(f) for f in files],
+        ],
+        check=True,
+    )
+
+
 def generate_rosetta_rpc(plugin_bin: Path, files: list[Path]) -> None:
     subprocess.run(
         [
@@ -125,6 +150,17 @@ def generate_rosetta_rpc(plugin_bin: Path, files: list[Path]) -> None:
         ],
         check=True,
     )
+    subprocess.run(
+        [
+            PROTOC,
+            f"--plugin=protoc-gen-rosetta-rpc={plugin_bin}",
+            f"--rosetta-rpc_out=lang=csharp:{OUT_CSHARP_RPC}",
+            "-I",
+            str(PROTO_ROOT),
+            *[str(f) for f in files],
+        ],
+        check=True,
+    )
 
 def _is_unix() -> bool:
     return os.name == 'posix'
@@ -136,8 +172,10 @@ def main() -> None:
         OUT_RUST_MESSAGES,
         OUT_JAVA_MESSAGES,
         OUT_KOTLIN_MESSAGES,
+        OUT_CSHARP_MESSAGES,
         OUT_RUST_RPC,
         OUT_KOTLIN_RPC,
+        OUT_CSHARP_RPC,
     )
 
     files = collect_proto_files()
@@ -148,6 +186,7 @@ def main() -> None:
     plugin_bin = build_rosetta_rpc_plugin()
     generate_rust_messages(files)
     generate_kotlin_messages(files)
+    generate_csharp_messages(files)
     generate_rosetta_rpc(plugin_bin, files)
     install_rpc_runtime()
 

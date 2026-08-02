@@ -39,6 +39,7 @@ pub struct FileInfo {
     pub java_package: Option<String>,
     pub java_multiple_files: bool,
     pub java_outer_classname: Option<String>,
+    pub csharp_namespace: Option<String>,
 }
 
 /// Maps every message/enum full proto name (no leading dot) encountered
@@ -60,12 +61,21 @@ impl TypeResolver {
                 java_package: options.and_then(|o| o.java_package.clone()),
                 java_multiple_files: options.and_then(|o| o.java_multiple_files).unwrap_or(false),
                 java_outer_classname: options.and_then(|o| o.java_outer_classname.clone()),
+                csharp_namespace: options.and_then(|o| o.csharp_namespace.clone()),
             };
             for message in &file.message_type {
                 collect_message_types(message, &package, &info, &mut file_info_by_type);
             }
             for enum_type in &file.enum_type {
                 collect_enum_type(enum_type, &package, &info, &mut file_info_by_type);
+            }
+            // Also index services by full name, so a service's own file's
+            // options (e.g. csharp_namespace) can be resolved the same way
+            // message/enum types are.
+            for service in &file.service {
+                if let Some(name) = service.name.as_deref() {
+                    file_info_by_type.insert(qualify(&package, name), info.clone());
+                }
             }
         }
         Self { file_info_by_type }

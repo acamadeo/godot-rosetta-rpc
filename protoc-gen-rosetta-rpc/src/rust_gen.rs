@@ -133,6 +133,7 @@ fn build_service_view(service: &ServiceIr, message_crate: &str) -> ServiceView {
         proto_name: service.name.clone(),
         package: service.package.clone(),
         type_name: service.name.clone(),
+        interface_name: service.name.clone(),
         factory_method_name: service.name.to_snake_case(),
         methods,
     }

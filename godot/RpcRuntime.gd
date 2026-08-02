@@ -5,14 +5,32 @@ extends Node
 # which services. When a service method is invoked, it delegates the request to the
 # proper runtime.
 
-# Where to search for `KotlinRuntime.gdj`. This assumes the Kotlin project uses the
-# following path defined in `build.gradle.kts`.
+# Fallback search roots for KotlinRuntime.gdj / CSharpRuntime.cs, used only if
+# a project's [rosetta_rpc] section (written by install.py's
+# --kotlin-gdj-root / --csharp-rpc-root flags — see below) doesn't override
+# them.
+# 
+# For Kotlin, this should match the path defined in `build.gradle.kts`:
 # ```
 # registrationFilesDirectory.set(projectDir.resolve("kotlin/gdj"))
 # ```
-const KOTLIN_GDJ_SEARCH_ROOT := "res://kotlin/gdj"
+# 
+# For C#, this should match the directory where CSharpRuntime.cs is
+# outputted.
+const DEFAULT_KOTLIN_GDJ_SEARCH_ROOT := "res://kotlin/gdj"
+const DEFAULT_CSHARP_RPC_SEARCH_ROOT := "res://csharp/generated/rpc"
 
-var _service_routes: Dictionary = {} # service_id (String) -> Node (owning runtime)
+var _kotlin_gdj_search_root: String = ProjectSettings.get_setting(
+	"rosetta_rpc/kotlin_gdj_root", DEFAULT_KOTLIN_GDJ_SEARCH_ROOT
+)
+var _csharp_rpc_search_root: String = ProjectSettings.get_setting(
+	"rosetta_rpc/csharp_rpc_root", DEFAULT_CSHARP_RPC_SEARCH_ROOT
+)
+
+# service_id (String) -> Dictionary{node: Node, invoke_method: String}.
+# - invoke_method varies per language: snake_case for Rust/Kotlin,
+#     PascalCase for C#.
+var _service_routes: Dictionary = {}
 
 func _ready() -> void:
 	if ClassDB.class_exists("RustRuntime"):
@@ -23,18 +41,30 @@ func _ready() -> void:
 
 	# Unlike gdext, godot-kotlin-jvm classes do not register in ClassDB.
 	# Instead, find the generated .gdj registration file and manually load it.
-	var kotlin_runtime_gdj_path := _recurse_find_file(KOTLIN_GDJ_SEARCH_ROOT, "KotlinRuntime.gdj")
+	var kotlin_runtime_gdj_path := _recurse_find_file(_kotlin_gdj_search_root, "KotlinRuntime.gdj")
 	if kotlin_runtime_gdj_path != "":
 		var kotlin_runtime_script: Script = load(kotlin_runtime_gdj_path)
-		var kotlin_runtime: Node = kotlin_runtime_script.new()
-		add_child(kotlin_runtime)
-		kotlin_runtime.call("bootstrap")
-		_register_routes(kotlin_runtime)
+		if kotlin_runtime_script != null:
+			var kotlin_runtime: Node = kotlin_runtime_script.new()
+			add_child(kotlin_runtime)
+			kotlin_runtime.call("bootstrap")
+			_register_routes(kotlin_runtime)
+
+	# Unlike gdext, godot-kotlin-jvm classes do not register in ClassDB.
+	# Instead, find the generated CSharpRuntime.cs file and manually load it.
+	var csharp_runtime_path := _recurse_find_file(_csharp_rpc_search_root, "CSharpRuntime.cs")
+	if csharp_runtime_path != "":
+		var csharp_runtime_script: Script = load(csharp_runtime_path)
+		if csharp_runtime_script != null:
+			var csharp_runtime: Node = csharp_runtime_script.new()
+			add_child(csharp_runtime)
+			csharp_runtime.call("Bootstrap")
+			_register_routes(csharp_runtime, "Invoke", "RegisteredServiceIds")
 
 	# Adding another language: instantiate its runtime class the same way —
 	# via ClassDB if it registers native classes (like Rust), or via a
-	# directory scan for its own equivalent of a .gdj file. Then call
-	#  _register_routes() on it.
+	# directory scan for its own equivalent of a KotlinRuntime.gdj or
+	# CSharpRuntime.cs file. Then call _register_routes() on it.
 
 # Returns whether the runtime has invoked service_id.
 func has_service(service_id: String) -> bool:
@@ -47,9 +77,9 @@ func has_service(service_id: String) -> bool:
 # This is the single entry point every language's RpcClient calls, regardless
 # of which language actually implements service_id.
 func invoke(service_id: String, method_id: String, request_bytes: PackedByteArray) -> PackedByteArray:
-	var runtime_node: Node = _service_routes.get(service_id)
-	assert(runtime_node != null, "RpcRuntime: no runtime registered for service '%s'" % service_id)
-	return runtime_node.call("invoke", service_id, method_id, request_bytes)
+	var route = _service_routes.get(service_id)
+	assert(route != null, "RpcRuntime: no runtime registered for service '%s'" % service_id)
+	return route.node.call(route.invoke_method, service_id, method_id, request_bytes)
 
 
 # Recursively searches under dir_path for a file named filename, returning
@@ -74,9 +104,13 @@ func _recurse_find_file(dir_path: String, filename: String) -> String:
 	dir.list_dir_end()
 	return ""
 
-func _register_routes(runtime_node: Node) -> void:
-	for service_id in runtime_node.call("registered_service_ids"):
+func _register_routes(
+	runtime_node: Node,
+	invoke_method: String = "invoke",
+	registered_ids_method: String = "registered_service_ids",
+) -> void:
+	for service_id in runtime_node.call(registered_ids_method):
 		if _service_routes.has(service_id):
 			push_error("RpcRuntime: service '%s' is already registered by another runtime" % service_id)
 			continue
-		_service_routes[service_id] = runtime_node
+		_service_routes[service_id] = {"node": runtime_node, "invoke_method": invoke_method}

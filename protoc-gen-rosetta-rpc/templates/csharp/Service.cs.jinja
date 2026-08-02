@@ -1,0 +1,9 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+namespace {{ package }};
+
+public interface {{ interface_name }}
+{
+{% for method in methods %}
+    {{ method.output_type }} {{ method.method_name }}({{ method.input_type }} request);
+{% endfor %}
+}
