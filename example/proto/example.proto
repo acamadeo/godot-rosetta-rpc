@@ -25,6 +25,14 @@ message ProfileResponse {
   string message = 1;
 }
 
+message UnlockAchievementRequest {
+  string achievement_id = 1;
+}
+
+message UnlockAchievementResponse {
+  string message = 1;
+}
+
 // A simple time source, implemented in Rust. Does not call other services.
 service Clock {
   rpc CurrentTime(CurrentTimeRequest) returns (CurrentTimeResponse);
@@ -38,4 +46,9 @@ service Profiler {
 // A simple game service, implemented in Kotlin. Calls Clock service.
 service GameService {
   rpc Ping(PingRequest) returns (PingResponse);
+}
+
+// A simple achievements service, implemented in C#. Calls Clock service.
+service Achievements {
+  rpc UnlockAchievement(UnlockAchievementRequest) returns (UnlockAchievementResponse);
 }

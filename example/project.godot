@@ -7,9 +7,17 @@ config_version=5
 [application]
 
 config/name="godot-rosetta-rpc-example"
-config/features=PackedStringArray("4.5")
+config/features=PackedStringArray("4.5", "C#")
 
 
 [autoload]
 RpcRuntime="*res://RpcRuntime.gd"
 
+[dotnet]
+
+project/assembly_name="rosetta-rpc-example"
+
+[rosetta_rpc]
+
+csharp_rpc_root="res://csharp/generated/rpc"
+kotlin_gdj_root="res://kotlin/gdj"

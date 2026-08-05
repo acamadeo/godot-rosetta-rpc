@@ -24,17 +24,17 @@ fn run_protoc(lang: &str, extra_params: &str, out_dir: &Path) {
 
     let status = Command::new("protoc")
         .arg(format!("--plugin=protoc-gen-rosetta-rpc={plugin_bin}"))
-        .arg(format!(
-            "--rosetta-rpc_out={params}:{}",
-            out_dir.display()
-        ))
+        .arg(format!("--rosetta-rpc_out={params}:{}", out_dir.display()))
         .arg("-I")
         .arg(&fixtures_dir)
         .arg(fixtures_dir.join("example.proto"))
         .status()
         .expect("failed to spawn protoc — is it installed and on PATH?");
 
-    assert!(status.success(), "protoc exited with failure for lang={lang}");
+    assert!(
+        status.success(),
+        "protoc exited with failure for lang={lang}"
+    );
 }
 
 fn collect_files(root: &Path) -> BTreeSet<PathBuf> {
@@ -122,6 +122,11 @@ fn rust_output_matches_golden() {
     // ServiceImplementations in bootstrap.rs.jinja), not a generation-time
     // one.
     assert_matches_golden("rust", "message_crate=protobuf_gen");
+}
+
+#[test]
+fn csharp_output_matches_golden() {
+    assert_matches_golden("csharp", "");
 }
 
 #[test]

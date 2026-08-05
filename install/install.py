@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
 """
 Installs `RpcRuntime.gd` into a target Godot project and registers it as an
-autoload in that project's `project.godot`.
+autoload in that project's `project.godot`. Also writes the search roots
+RpcRuntime.gd uses to discover the Kotlin/C# runtimes into a `[rosetta_rpc]`
+section of `project.godot` (see --kotlin-gdj-root/--csharp-rpc-root).
 """
 
 import argparse
-import re
 import shutil
 from pathlib import Path
 
-from util import read_autoload_value, AUTOLOAD_KEY
+from util import read_autoload_value, set_config_value, AUTOLOAD_KEY
 
 # Path within this codebase of the file to copy over.
 FRAMEWORK_ROOT = Path(__file__).resolve().parent.parent
 RPC_RUNTIME_SOURCE = FRAMEWORK_ROOT / "godot" / "RpcRuntime.gd"
 
+DEFAULT_KOTLIN_GDJ_ROOT = "kotlin/gdj"
+DEFAULT_CSHARP_RPC_ROOT = "csharp/generated/rpc"
 
-def install(target_project: Path, dest_dir: str | None) -> None:
+
+def install(
+    target_project: Path,
+    dest_dir: str | None,
+    csharp_rpc_root: str,
+    kotlin_gdj_root: str,
+) -> None:
     if not RPC_RUNTIME_SOURCE.is_file():
         raise FileNotFoundError(f"RpcRuntime.gd not found at {RPC_RUNTIME_SOURCE}")
 
@@ -36,8 +45,13 @@ def install(target_project: Path, dest_dir: str | None) -> None:
     print(f"Installed RpcRuntime.gd -> {dest_file}")
 
     autoload_path = dest_file.relative_to(target_project).as_posix()
-    _set_autoload(project_godot, AUTOLOAD_KEY, f"*res://{autoload_path}")
+    set_config_value(project_godot, "autoload", AUTOLOAD_KEY, f"*res://{autoload_path}")
     print(f"Registered autoload '{AUTOLOAD_KEY}' in {project_godot}")
+
+    set_config_value(project_godot, "rosetta_rpc", "csharp_rpc_root", f"res://{csharp_rpc_root}")
+    set_config_value(project_godot, "rosetta_rpc", "kotlin_gdj_root", f"res://{kotlin_gdj_root}")
+    print(f"Set rosetta_rpc.csharp_rpc_root = \"res://{csharp_rpc_root}\" in {project_godot}")
+    print(f"Set rosetta_rpc.kotlin_gdj_root = \"res://{kotlin_gdj_root}\" in {project_godot}")
 
 
 def _resolve_dest_dir(
@@ -53,7 +67,7 @@ def _resolve_dest_dir(
     """
     if dest_dir is not None:
         return dest_dir
-    existing = read_autoload_value(project_godot, AUTOLOAD_KEY)
+    existing = read_autoload_value(project_godot, "autoload", AUTOLOAD_KEY)
     if existing is not None:
         res_path = existing.lstrip("*")
         if res_path.startswith("res://"):
@@ -63,7 +77,7 @@ def _resolve_dest_dir(
 
 
 def _remove_previous_copy(target_project: Path, project_godot: Path) -> None:
-    existing = read_autoload_value(project_godot, AUTOLOAD_KEY)
+    existing = read_autoload_value(project_godot, "autoload", AUTOLOAD_KEY)
     if existing is None:
         return
     res_path = existing.lstrip("*")
@@ -72,60 +86,6 @@ def _remove_previous_copy(target_project: Path, project_godot: Path) -> None:
     previous_file = target_project / res_path[len("res://") :]
     if previous_file.is_file():
         previous_file.unlink()
-
-
-def _set_autoload(project_godot: Path, key: str, value: str) -> None:
-    """
-    Inserts or replaces `key="value"` inside the `[autoload]` section.
-
-    `configparser` is not used as `configparser.write()` drops `;`-comments and 
-    blank-line layout. Also avoids adding dependencies.
-    """
-    lines = project_godot.read_text().splitlines(keepends=True)
-    entry = f'{key}="{value}"\n'
-    key_pattern = re.compile(rf"^{re.escape(key)}=")
-
-    autoload_idx = next(
-        (i for i, l in enumerate(lines) if l.strip() == "[autoload]"), None
-    )
-
-    # Create [autoload] section if not present.
-    if autoload_idx is None:
-        if lines and not lines[-1].endswith("\n"):
-            lines[-1] += "\n"
-        lines += ["\n[autoload]\n\n", entry]
-        project_godot.write_text("".join(lines))
-        return
-
-    section_end = next(
-        (
-            i
-            for i in range(autoload_idx + 1, len(lines))
-            if lines[i].strip().startswith("[") and lines[i].strip() != "[autoload]"
-        ),
-        len(lines),
-    )
-    existing_idx = next(
-        (
-            i
-            for i in range(autoload_idx + 1, section_end)
-            if key_pattern.match(lines[i].strip())
-        ),
-        None,
-    )
-
-    if existing_idx is not None:
-        lines[existing_idx] = entry
-    else:
-        # Insert right after the section's last non-blank line, in order to
-        # preserve any gap between this section and the next one.
-        last_content_idx = next(
-            (i for i in range(section_end - 1, autoload_idx, -1) if lines[i].strip()),
-            autoload_idx,
-        )
-        lines.insert(last_content_idx + 1, entry)
-
-    project_godot.write_text("".join(lines))
 
 
 def main() -> None:
@@ -142,8 +102,29 @@ def main() -> None:
             "for a fresh install)"
         ),
     )
+    parser.add_argument(
+        "--csharp-rpc-root",
+        default=DEFAULT_CSHARP_RPC_ROOT,
+        help=(
+            "directory (relative to target_project) where RpcRuntime.gd should "
+            f"recursively search for CSharpRuntime.cs (default: {DEFAULT_CSHARP_RPC_ROOT})"
+        ),
+    )
+    parser.add_argument(
+        "--kotlin-gdj-root",
+        default=DEFAULT_KOTLIN_GDJ_ROOT,
+        help=(
+            "directory (relative to target_project) where RpcRuntime.gd should "
+            f"recursively search for KotlinRuntime.gdj (default: {DEFAULT_KOTLIN_GDJ_ROOT})"
+        ),
+    )
     args = parser.parse_args()
-    install(args.target_project.resolve(), args.dest_dir)
+    install(
+        args.target_project.resolve(),
+        args.dest_dir,
+        args.csharp_rpc_root,
+        args.kotlin_gdj_root,
+    )
 
 
 if __name__ == "__main__":

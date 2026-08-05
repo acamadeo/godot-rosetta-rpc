@@ -9,6 +9,7 @@ use strum::IntoEnumIterator;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
 pub enum Lang {
     Rust,
+    CSharp,
     Kotlin,
 }
 
@@ -16,6 +17,7 @@ impl Lang {
     fn as_str(self) -> &'static str {
         match self {
             Lang::Rust => "rust",
+            Lang::CSharp => "csharp",
             Lang::Kotlin => "kotlin",
         }
     }
@@ -90,6 +92,13 @@ mod tests {
         let options = Options::parse("lang=rust,message_crate=protobuf_gen").unwrap();
         assert_eq!(options.lang, Lang::Rust);
         assert_eq!(options.message_crate.as_deref(), Some("protobuf_gen"));
+    }
+
+    #[test]
+    fn parses_csharp_params_without_message_crate() {
+        let options = Options::parse("lang=csharp").unwrap();
+        assert_eq!(options.lang, Lang::CSharp);
+        assert_eq!(options.message_crate, None);
     }
 
     #[test]

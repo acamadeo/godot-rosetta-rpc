@@ -114,6 +114,7 @@ fn build_service_view(service: &ServiceIr, ir: &Ir) -> Result<ServiceView, Strin
         proto_name: service.name.clone(),
         package: service.package.clone(),
         type_name: service.name.clone(),
+        interface_name: service.name.clone(),
         factory_method_name: service.name.to_lower_camel_case(),
         methods,
     })

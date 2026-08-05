@@ -2,20 +2,24 @@
 use askama::Template;
 use prost_types::compiler::code_generator_response::File;
 
+use crate::csharp_gen::CSharpGenerator;
 use crate::ir::Ir;
+use crate::kotlin_gen::KotlinGenerator;
 use crate::options::{Lang, Options};
+use crate::rust_gen::RustGenerator;
 
-/// Adding a new language means adding a `Lang` variant (see `options.rs`),
-/// a new `xxx_gen.rs` implementing [`LanguageGenerator`], and one match arm
-/// here — nothing in `ir.rs`, `naming.rs`, or `main.rs` needs to change.
+/// Adding a new language means adding a `Lang` variant (see `options.rs`), a
+/// new `xxx_gen.rs` implementing [`LanguageGenerator`], and one match arm
+/// here.
 pub trait LanguageGenerator {
     fn generate(&self, ir: &Ir, options: &Options) -> Result<Vec<File>, String>;
 }
 
 pub fn generate(ir: &Ir, options: &Options) -> Result<Vec<File>, String> {
     let generator: Box<dyn LanguageGenerator> = match options.lang {
-        Lang::Rust => Box::new(crate::rust_gen::RustGenerator),
-        Lang::Kotlin => Box::new(crate::kotlin_gen::KotlinGenerator),
+        Lang::Rust => Box::new(RustGenerator),
+        Lang::Kotlin => Box::new(KotlinGenerator),
+        Lang::CSharp => Box::new(CSharpGenerator),
     };
     generator.generate(ir, options)
 }
@@ -56,7 +60,10 @@ macro_rules! glue_template {
         struct $name<'a> {
             package: &'a str,
             proto_name: &'a str,
+            #[allow(dead_code)]
             type_name: &'a str,
+            #[allow(dead_code)]
+            interface_name: &'a str,
             methods: &'a [$crate::view::MethodView],
         }
 
@@ -66,6 +73,7 @@ macro_rules! glue_template {
                     package: &v.package,
                     proto_name: &v.proto_name,
                     type_name: &v.type_name,
+                    interface_name: &v.interface_name,
                     methods: &v.methods,
                 }
             }

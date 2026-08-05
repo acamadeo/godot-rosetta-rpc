@@ -8,6 +8,7 @@
 //! writes an encoded `CodeGeneratorRequest` to this process's stdin and reads
 //! an encoded `CodeGeneratorResponse` from its stdout.
 
+mod csharp_gen;
 mod generator;
 mod ir;
 mod kotlin_gen;

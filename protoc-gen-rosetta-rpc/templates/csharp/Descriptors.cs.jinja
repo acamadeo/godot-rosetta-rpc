@@ -1,0 +1,12 @@
+// GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
+namespace {{ package }};
+
+using RosettaRpc;
+
+public static class {{ type_name }}Descriptors
+{
+{% for method in methods %}
+    public static readonly RpcMethodDescriptor<{{ method.input_type }}, {{ method.output_type }}> {{ method.const_name }} =
+        new("{{ proto_name }}", "{{ method.proto_name }}", {{ method.input_type }}.Parser, {{ method.output_type }}.Parser);
+{% endfor %}
+}

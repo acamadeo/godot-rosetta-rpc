@@ -107,6 +107,8 @@ See the [example/](example/) directory for a more fleshed-out example.
   `ServiceRegistry`, and a factory method that interfaces with Godot.
   - [`rust-runtime/`](rust-runtime/) - Rust language runtime, available as the Cargo package
     `godot-rosetta-rpc`.
+  - [`csharp-runtime/`](csharp-runtime/) - C# language runtime, packaged as the NuGet package
+    `GodotRosettaRpc`.
   - [`kotlin-runtime/`](kotlin-runtime/) - Kotlin language runtime, available as Gradle module
     `io.github.acamadeo:godot-rosetta-rpc`.
 
@@ -117,8 +119,8 @@ See the [example/](example/) directory for a more fleshed-out example.
 
 - [`example/`](example/) - a minimal fixture project, showcasing the whole pipeline
   end-to-end: a `Clock` service implemented in Rust, called by a
-  `GameService` implemented in Kotlin and a `Profiler` service implemented in
-  Rust.
+  `Profiler` service (also Rust), a `GameService` implemented in Kotlin, and
+  an `Achievements` service implemented in C#.
 
 ## Installing
 
@@ -137,6 +139,11 @@ See the [example/](example/) directory for a more fleshed-out example.
     ```bash
     python3 install/install.py /path/to/godot/project
     ```
+
+    If your project generates the Kotlin/C# runtime into non-default locations, override
+    the directories `RpcRuntime.gd` scans for them with `--csharp-rpc-root`/
+    `--kotlin-gdj-root` (both default to the conventions this repo's own
+    `example/` uses).
 
 ## Usage
 
@@ -180,21 +187,23 @@ See each language runtime's README with more specific instructions on how to use
 
 | Language | Docs                               |
 | -------- | ---------------------------------- |
-| Kotlin   | [README](kotlin-runtime/README.md) |
 | Rust     | [README](rust-runtime/README.md)   |
+| C#       | [README](csharp-runtime/README.md) |
+| Kotlin   | [README](kotlin-runtime/README.md) |
 
 ## Extending to a new language
 
 Currently, the following languages are supported:
 
 - Rust
+- C#
 - Kotlin
 
 Adding support for a new language involves:
 
 1.  Having a standard protobuf code generator for that language (message types only).
 1.  Adding a small runtime library implementing `RpcMethodDescriptor`,
-    `ServiceRegistry`, `RpcClient`, mirroring `rust-runtime`/`kotlin-runtime`.
+    `ServiceRegistry`, `RpcClient`, mirroring `rust-runtime`/`csharp-runtime`/`kotlin-runtime`.
 1.  Adding a new `LanguageGenerator` implementation + Askama template set in
     `protoc-gen-rosetta-rpc/templates/<language>/`.
 1.  Updating `RpcRuntime.gd` to bootstrap the language runtime, and register the
