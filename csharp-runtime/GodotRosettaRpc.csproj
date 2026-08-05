@@ -13,6 +13,8 @@
     <Description>C# runtime (RpcMethodDescriptor, ServiceRegistry, RpcClient) for the godot-rosetta-rpc cross-language RPC framework.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/acamadeo/godot-rosetta-rpc</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>godot;rpc;protobuf;gdextension</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +23,10 @@
     <PackageReference Include="GodotSharp" Version="4.6.3" ExcludeAssets="runtime" />
     <!-- Keep in sync with PROTOC_VERSION in ci.yml: protoc 32.1 -->
     <PackageReference Include="Google.Protobuf" Version="3.32.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
