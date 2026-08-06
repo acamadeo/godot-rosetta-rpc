@@ -3,6 +3,7 @@
 [![crates.io - protoc-gen-rosetta-rpc](https://img.shields.io/crates/v/protoc-gen-rosetta-rpc.svg?label=protoc-gen-rosetta-rpc)](https://crates.io/crates/protoc-gen-rosetta-rpc)
 [![crates.io - godot-rosetta-rpc](https://img.shields.io/crates/v/godot-rosetta-rpc.svg?label=rust-runtime)](https://crates.io/crates/godot-rosetta-rpc)
 [![Maven Central - godot-rosetta-rpc](https://img.shields.io/maven-central/v/io.github.acamadeo/godot-rosetta-rpc.svg?label=kotlin-runtime)](https://repo1.maven.org/maven2/io/github/acamadeo/godot-rosetta-rpc/)
+[![NuGet - GodotRosettaRpc](https://img.shields.io/nuget/v/GodotRosettaRpc.svg?label=csharp-runtime)](https://www.nuget.org/packages/GodotRosettaRpc/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A lightweight, in-process, cross-language framework for Godot projects that mix
