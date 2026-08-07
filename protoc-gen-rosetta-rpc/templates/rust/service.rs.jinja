@@ -3,6 +3,6 @@
 // Godot objects are inherently single-threaded.
 pub trait {{ type_name }} {
 {% for method in methods %}
-    fn {{ method.method_name }}(&self, request: {{ method.input_type }}) -> {{ method.output_type }};
+    fn {{ method.method_name }}(&self, request: {{ method.input_type }}) -> Result<{{ method.output_type }}, godot_rosetta_rpc::ServiceErr>;
 {% endfor %}
 }

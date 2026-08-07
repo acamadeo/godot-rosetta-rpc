@@ -1,7 +1,6 @@
 // GENERATED CODE — do not edit. Source: {{ package }}.{{ proto_name }}
 namespace {{ package }};
 
-using System;
 using Google.Protobuf;
 using RosettaRpc;
 
@@ -19,6 +18,6 @@ public class {{ type_name }}Adapter : IAdapter
 {% for method in methods %}
         "{{ method.proto_name }}" => _implementation.{{ method.method_name }}({{ method.input_type }}.Parser.ParseFrom(requestBytes)).ToByteArray(),
 {% endfor %}
-        _ => throw new ArgumentException($"unknown method: {methodId}"),
+        _ => throw new RpcException(RpcErrorCode.UnknownMethod, $"unknown method: {methodId}"),
     };
 }

@@ -8,11 +8,8 @@ impl GameServiceClient {
     pub fn new(rpc: godot_rosetta_rpc::RpcClient) -> Self {
         Self { rpc }
     }
-}
 
-impl GameService for GameServiceClient {
-
-    fn ping(&self, request: protobuf_gen::rosetta::example::PingRequest) -> protobuf_gen::rosetta::example::PingResponse {
+    pub fn ping(&self, request: protobuf_gen::rosetta::example::PingRequest) -> Result<protobuf_gen::rosetta::example::PingResponse, godot_rosetta_rpc::RpcError> {
         self.rpc.call(&GameServiceDescriptors::PING, request)
     }
 

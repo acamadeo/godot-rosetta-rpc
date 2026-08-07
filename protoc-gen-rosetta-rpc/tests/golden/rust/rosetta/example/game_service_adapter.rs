@@ -10,7 +10,8 @@ impl godot_rosetta_rpc::ErasedAdapter for GameServiceAdapter {
             "Ping" => {
                 let request = <protobuf_gen::rosetta::example::PingRequest as prost::Message>::decode(request_bytes)
                     .map_err(|_| godot_rosetta_rpc::RpcError::Decode)?;
-                Ok(prost::Message::encode_to_vec(&self.implementation.ping(request)))
+                let response = self.implementation.ping(request)?;
+                Ok(prost::Message::encode_to_vec(&response))
             }
 
             _ => Err(godot_rosetta_rpc::RpcError::UnknownMethod),

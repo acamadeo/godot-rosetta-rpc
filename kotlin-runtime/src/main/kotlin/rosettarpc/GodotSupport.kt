@@ -60,7 +60,17 @@ object GodotSupport {
       methodId: String,
       requestBytes: PackedByteArray,
   ): PackedByteArray {
-    val bytes = registry.dispatch(serviceId, methodId, requestBytes.toByteArray())
+    val bytes =
+        try {
+          Envelope.encodeOk(registry.dispatch(serviceId, methodId, requestBytes.toByteArray()))
+        } catch (e: RpcException) {
+          Envelope.encodeError(e.code, e.message ?: "")
+        } catch (e: com.google.protobuf.InvalidProtocolBufferException) {
+          Envelope.encodeError(
+              RpcErrorCode.DECODE, e.message ?: "failed to decode request protobuf")
+        } catch (e: Exception) {
+          Envelope.encodeError(RpcErrorCode.APPLICATION, e.message ?: e.toString())
+        }
     return PackedByteArray(bytes)
   }
 

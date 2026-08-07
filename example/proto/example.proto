@@ -38,17 +38,41 @@ service Clock {
   rpc CurrentTime(CurrentTimeRequest) returns (CurrentTimeResponse);
 }
 
+message ProbeBrokenServiceRequest {
+  // Which BrokenXXX service to call — e.g. "BrokenRust", "BrokenKotlin", "BrokenCSharp".
+  string target = 1;
+}
+
+message ProbeBrokenServiceResult {
+  // The message from the RpcError/RpcException the caller caught when it
+  // called the BrokenXXX service's Fail method. If empty, the call unexpectedly
+  // succeeded.
+  string error_message = 1;
+}
+
 // A simple profiler service, implemented in Rust. Calls Clock service.
 service Profiler {
   rpc Profile(ProfileRequest) returns (ProfileResponse);
+
+  // Calls the BrokenXXX service named by `request.target` and reports the error
+  // it caught. For testing errors across language boundaries.
+  rpc ProbeBrokenService(ProbeBrokenServiceRequest) returns (ProbeBrokenServiceResult);
 }
 
 // A simple game service, implemented in Kotlin. Calls Clock service.
 service GameService {
   rpc Ping(PingRequest) returns (PingResponse);
+
+  // Calls the BrokenXXX service named by `request.target` and reports the error
+  // it caught. For testing errors across language boundaries.
+  rpc ProbeBrokenService(ProbeBrokenServiceRequest) returns (ProbeBrokenServiceResult);
 }
 
 // A simple achievements service, implemented in C#. Calls Clock service.
 service Achievements {
   rpc UnlockAchievement(UnlockAchievementRequest) returns (UnlockAchievementResponse);
+
+  // Calls the BrokenXXX service named by `request.target` and reports the error
+  // it caught. For testing errors across language boundaries.
+  rpc ProbeBrokenService(ProbeBrokenServiceRequest) returns (ProbeBrokenServiceResult);
 }

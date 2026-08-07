@@ -11,6 +11,7 @@ use godot::classes::Node;
 use godot::obj::Gd;
 
 use crate::client::RpcClient;
+use crate::envelope;
 use crate::registry::ServiceRegistry;
 
 pub const RPC_RUNTIME_AUTOLOAD_PATH: &str = "/root/RpcRuntime";
@@ -60,20 +61,27 @@ pub fn bootstrap_rpc_client(node: Gd<Node>) -> RpcClient {
 
 /// NOT INTENDED TO BE CALLED DIRECTLY BY CLIENTS!
 ///
-/// Backs the generated `RustRuntime`'s `#[func] invoke(...)`.
+/// Backs the generated `RustRuntime`'s `#[func] invoke(...)`. Always returns
+/// an envelope-encoded `PackedByteArray` — a dispatch failure (unknown
+/// service/method, decode failure, or the service implementation itself
+/// erroring/panicking) is encoded as an error envelope rather than panicking,
+/// since a panic here would not reliably propagate back to a caller in
+/// another language across the Godot `Variant` boundary.
 pub fn dispatch_bytes(
     registry: &ServiceRegistry,
     service_id: GString,
     method_id: GString,
     request_bytes: PackedByteArray,
 ) -> PackedByteArray {
-    let bytes = registry
-        .dispatch(
-            &service_id.to_string(),
-            &method_id.to_string(),
-            request_bytes.to_vec().as_slice(),
-        )
-        .unwrap_or_else(|e| panic!("rpc dispatch error: {e}"));
+    let result = registry.dispatch(
+        &service_id.to_string(),
+        &method_id.to_string(),
+        request_bytes.to_vec().as_slice(),
+    );
+    let bytes = match result {
+        Ok(payload) => envelope::encode_ok(&payload),
+        Err(e) => envelope::encode_err(&e),
+    };
     PackedByteArray::from(bytes.as_slice())
 }
 
