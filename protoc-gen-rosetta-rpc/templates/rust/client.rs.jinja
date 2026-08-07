@@ -8,11 +8,8 @@ impl {{ type_name }}Client {
     pub fn new(rpc: godot_rosetta_rpc::RpcClient) -> Self {
         Self { rpc }
     }
-}
-
-impl {{ type_name }} for {{ type_name }}Client {
 {% for method in methods %}
-    fn {{ method.method_name }}(&self, request: {{ method.input_type }}) -> {{ method.output_type }} {
+    pub fn {{ method.method_name }}(&self, request: {{ method.input_type }}) -> Result<{{ method.output_type }}, godot_rosetta_rpc::RpcError> {
         self.rpc.call(&{{ type_name }}Descriptors::{{ method.const_name }}, request)
     }
 {% endfor %}

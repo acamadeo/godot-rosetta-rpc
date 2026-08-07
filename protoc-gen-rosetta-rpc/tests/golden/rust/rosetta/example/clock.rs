@@ -3,6 +3,6 @@
 // Godot objects are inherently single-threaded.
 pub trait Clock {
 
-    fn current_time(&self, request: protobuf_gen::rosetta::example::CurrentTimeRequest) -> protobuf_gen::rosetta::example::CurrentTimeResponse;
+    fn current_time(&self, request: protobuf_gen::rosetta::example::CurrentTimeRequest) -> Result<protobuf_gen::rosetta::example::CurrentTimeResponse, godot_rosetta_rpc::ServiceErr>;
 
 }

@@ -8,11 +8,12 @@
 
 mod client;
 mod descriptor;
+mod envelope;
 mod error;
 pub mod godot_support;
 mod registry;
 
 pub use client::RpcClient;
 pub use descriptor::RpcMethodDescriptor;
-pub use error::RpcError;
+pub use error::{RpcError, ServiceErr};
 pub use registry::{ErasedAdapter, ServiceRegistry};

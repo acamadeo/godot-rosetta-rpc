@@ -1,5 +1,6 @@
 use godot::prelude::*;
 
+mod broken_rust_impl;
 mod clock_impl;
 mod profiler_impl;
 mod rpc_impls;

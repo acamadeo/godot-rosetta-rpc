@@ -73,12 +73,15 @@ func has_service(service_id: String) -> bool:
 
 # Invokes /<service_id>.<method_id> with the given request and returns its response as a byte
 # stream.
-# 
+#
 # This is the single entry point every language's RpcClient calls, regardless
 # of which language actually implements service_id.
 func invoke(service_id: String, method_id: String, request_bytes: PackedByteArray) -> PackedByteArray:
 	var route = _service_routes.get(service_id)
-	assert(route != null, "RpcRuntime: no runtime registered for service '%s'" % service_id)
+	if route == null:
+		var message := "RpcRuntime: no runtime registered for service '%s'" % service_id
+		push_error(message)
+		return _encode_error(_ERROR_CODE_UNKNOWN_SERVICE, message)
 	return route.node.call(route.invoke_method, service_id, method_id, request_bytes)
 
 
@@ -114,3 +117,28 @@ func _register_routes(
 			push_error("RpcRuntime: service '%s' is already registered by another runtime" % service_id)
 			continue
 		_service_routes[service_id] = {"node": runtime_node, "invoke_method": invoke_method}
+
+
+# The error code corresponding to `RpcError::UnknownService`.
+const _ERROR_CODE_UNKNOWN_SERVICE := 0
+
+# Encodes an error envelope matching the format each language runtime's
+# `Envelope` expects:
+#   status_byte(0x01) ++ code:i32(LE) ++ message_len:u32(LE) += message(UTF-8)
+func _encode_error(code: int, message: String) -> PackedByteArray:
+	var message_bytes := message.to_utf8_buffer()
+	var bytes := PackedByteArray()
+	bytes.resize(1 + 4 + 4 + message_bytes.size())
+	bytes[0] = 0x01
+	_write_i32_le(bytes, 1, code)
+	_write_i32_le(bytes, 5, message_bytes.size())
+	for i in message_bytes.size():
+		bytes[9 + i] = message_bytes[i]
+	return bytes
+
+
+func _write_i32_le(bytes: PackedByteArray, offset: int, value: int) -> void:
+	bytes[offset] = value & 0xFF
+	bytes[offset + 1] = (value >> 8) & 0xFF
+	bytes[offset + 2] = (value >> 16) & 0xFF
+	bytes[offset + 3] = (value >> 24) & 0xFF

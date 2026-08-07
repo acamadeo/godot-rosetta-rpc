@@ -23,7 +23,8 @@ class ServiceRegistry {
   fun dispatch(serviceId: String, methodId: String, requestBytes: ByteArray): ByteArray {
     val adapter =
         services[serviceId]
-            ?: throw IllegalArgumentException("no service registered for service id: $serviceId")
+            ?: throw RpcException(
+                RpcErrorCode.UNKNOWN_SERVICE, "no service registered for service id: $serviceId")
     return adapter.invoke(methodId, requestBytes)
   }
 

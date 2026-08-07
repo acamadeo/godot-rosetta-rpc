@@ -10,7 +10,8 @@ impl godot_rosetta_rpc::ErasedAdapter for ClockAdapter {
             "CurrentTime" => {
                 let request = <protobuf_gen::rosetta::example::CurrentTimeRequest as prost::Message>::decode(request_bytes)
                     .map_err(|_| godot_rosetta_rpc::RpcError::Decode)?;
-                Ok(prost::Message::encode_to_vec(&self.implementation.current_time(request)))
+                let response = self.implementation.current_time(request)?;
+                Ok(prost::Message::encode_to_vec(&response))
             }
 
             _ => Err(godot_rosetta_rpc::RpcError::UnknownMethod),
