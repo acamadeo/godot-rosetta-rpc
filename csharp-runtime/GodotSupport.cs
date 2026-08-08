@@ -1,4 +1,5 @@
 using Godot;
+using Google.Protobuf;
 
 namespace RosettaRpc;
 
@@ -29,10 +30,28 @@ public static class GodotSupport
 
     /// <summary>
     /// NOT INTENDED TO BE CALLED DIRECTLY BY CLIENTS! Backs the generated
-    /// <c>CSharpRuntime</c>'s <c>Invoke(...)</c>.
+    /// <c>CSharpRuntime</c>'s <c>Invoke(...)</c>. Always returns an
+    /// Envelope-encoded response (either success or error).
     /// </summary>
-    public static byte[] DispatchBytes(ServiceRegistry registry, string serviceId, string methodId, byte[] requestBytes) =>
-        registry.Dispatch(serviceId, methodId, requestBytes);
+    public static byte[] DispatchBytes(ServiceRegistry registry, string serviceId, string methodId, byte[] requestBytes)
+    {
+        try
+        {
+            return Envelope.EncodeOk(registry.Dispatch(serviceId, methodId, requestBytes));
+        }
+        catch (RpcException e)
+        {
+            return Envelope.EncodeError(e.Code, e.Message);
+        }
+        catch (InvalidProtocolBufferException e)
+        {
+            return Envelope.EncodeError(RpcErrorCode.Decode, e.Message);
+        }
+        catch (Exception e)
+        {
+            return Envelope.EncodeError(RpcErrorCode.Application, e.Message);
+        }
+    }
 
     /// <summary>
     /// NOT INTENDED TO BE CALLED DIRECTLY BY CLIENTS! Backs the generated

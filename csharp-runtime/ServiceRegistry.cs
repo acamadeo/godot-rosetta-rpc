@@ -24,7 +24,7 @@ public sealed class ServiceRegistry
     {
         if (!_services.TryGetValue(serviceId, out var adapter))
         {
-            throw new ArgumentException($"no service registered for service id: {serviceId}");
+            throw new RpcException(RpcErrorCode.UnknownService, $"no service registered for service id: {serviceId}");
         }
         return adapter.Invoke(methodId, requestBytes);
     }

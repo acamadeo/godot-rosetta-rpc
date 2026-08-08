@@ -1,7 +1,6 @@
 // GENERATED CODE — do not edit. Source: Rosetta.Example.GameService
 namespace Rosetta.Example;
 
-using System;
 using Google.Protobuf;
 using RosettaRpc;
 
@@ -19,6 +18,6 @@ public class GameServiceAdapter : IAdapter
 
         "Ping" => _implementation.Ping(Rosetta.Example.PingRequest.Parser.ParseFrom(requestBytes)).ToByteArray(),
 
-        _ => throw new ArgumentException($"unknown method: {methodId}"),
+        _ => throw new RpcException(RpcErrorCode.UnknownMethod, $"unknown method: {methodId}"),
     };
 }

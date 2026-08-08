@@ -61,6 +61,9 @@ class BuzzerImpl(private val factory: GeneratedServiceFactory) : Buzzer {
 }
 ```
 
+A method reports failure by throwing an exception (of any type). The exception will be propagated as an `RpcException`
+with `RpcErrorCode.APPLICATION` (see [Error handling](#error-handling)).
+
 ## Register an RPC service
 
 Every service implemented in Kotlin must be linked through a single
@@ -92,8 +95,18 @@ class MyNode : Node2D() {
   @RegisterFunction
   override fun _ready() {
     val services = GeneratedServiceFactory(GodotSupport.makeRpcClient(this))
+
+    // Without error handling.
     val response = services.buzzer().ping(pingRequest { message = "hello" })
     GD.print(response.message)
+
+    // With error handling.
+    try {
+      val response = services.buzzer().ping(pingRequest { message = "hello" })
+      GD.print(response.message)
+    } catch (e: RpcException) {
+      GD.printErr("Ping failed (${e.code}): ${e.message}")
+    }
   }
 }
 ```
@@ -101,3 +114,15 @@ class MyNode : Node2D() {
 To call one service from another's implementation, reuse the
 `GeneratedServiceFactory` passed into your constructor (see above) instead of
 building a new one.
+
+## Error handling
+
+`RpcClient.call` throws `RpcException` when a call fails. `RpcException.code`
+is an `RpcErrorCode`:
+
+- `UNKNOWN_SERVICE` / `UNKNOWN_METHOD` — no service/method is registered for
+  the id the client called with.
+- `DECODE` — the request or response protobuf failed to decode.
+- `APPLICATION` — the service implementation itself failed: it threw, or an
+  otherwise-uncaught exception was caught on its behalf by
+  `GodotSupport.dispatchBytes`.

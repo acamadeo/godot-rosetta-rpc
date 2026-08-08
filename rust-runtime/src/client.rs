@@ -3,6 +3,8 @@ use std::rc::Rc;
 use prost::Message;
 
 use crate::descriptor::RpcMethodDescriptor;
+use crate::envelope;
+use crate::error::RpcError;
 
 /// Generated clients call through an `RpcClient` instead of talking to any
 /// transport directly. The `invoke` closure is the entire seam between "pure
@@ -27,7 +29,11 @@ impl RpcClient {
         }
     }
 
-    pub fn call<Req, Resp>(&self, descriptor: &RpcMethodDescriptor<Req, Resp>, request: Req) -> Resp
+    pub fn call<Req, Resp>(
+        &self,
+        descriptor: &RpcMethodDescriptor<Req, Resp>,
+        request: Req,
+    ) -> Result<Resp, RpcError>
     where
         Req: Message,
         Resp: Message + Default,
@@ -35,7 +41,8 @@ impl RpcClient {
         let request_bytes = request.encode_to_vec();
         let response_bytes =
             (self.invoke)(descriptor.service_id, descriptor.method_id, &request_bytes);
-        Resp::decode(response_bytes.as_slice()).expect("invalid response protobuf")
+        let payload = envelope::decode(&response_bytes)?;
+        Resp::decode(payload.as_slice()).map_err(|_| RpcError::Decode)
     }
 }
 
@@ -56,7 +63,10 @@ mod tests {
         );
 
         let client = RpcClient::new(move |service_id, method_id, bytes| {
-            registry.dispatch(service_id, method_id, bytes).unwrap()
+            match registry.dispatch(service_id, method_id, bytes) {
+                Ok(payload) => envelope::encode_ok(&payload),
+                Err(e) => envelope::encode_err(&e),
+            }
         });
 
         let descriptor = RpcMethodDescriptor::<prost_types::Duration, prost_types::Duration>::new(
@@ -67,7 +77,24 @@ mod tests {
             nanos: 7,
         };
         let response = client.call(&descriptor, request.clone());
-        assert_eq!(response, request);
+        assert_eq!(response, Ok(request));
+    }
+
+    #[test]
+    fn surfaces_dispatch_error_as_err() {
+        let registry = ServiceRegistry::new();
+        let client = RpcClient::new(move |service_id, method_id, bytes| {
+            match registry.dispatch(service_id, method_id, bytes) {
+                Ok(payload) => envelope::encode_ok(&payload),
+                Err(e) => envelope::encode_err(&e),
+            }
+        });
+
+        let descriptor = RpcMethodDescriptor::<prost_types::Duration, prost_types::Duration>::new(
+            "Echoer", "Echo",
+        );
+        let response = client.call(&descriptor, prost_types::Duration::default());
+        assert_eq!(response, Err(RpcError::UnknownService));
     }
 
     struct EchoAdapter;

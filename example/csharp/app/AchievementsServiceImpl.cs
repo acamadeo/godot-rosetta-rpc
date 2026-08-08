@@ -1,4 +1,6 @@
+using System;
 using Rosetta.Example;
+using RosettaRpc;
 
 namespace Example.App;
 
@@ -21,5 +23,31 @@ public class AchievementsServiceImpl : IAchievements
         {
             Message = $"unlocked: {request.AchievementId} @ {currentTime.Millis}ms",
         };
+    }
+
+    /// <summary>
+    /// Calls the BrokenXXX service named by `request.Target` and reports the
+    /// RpcException it caught.
+    /// 
+    /// Note that C# can only call Rust across language boundaries.
+    /// </summary>
+    public ProbeBrokenServiceResult ProbeBrokenService(ProbeBrokenServiceRequest request)
+    {
+        try
+        {
+            switch (request.Target)
+            {
+                case "BrokenRust":
+                    _factory.BrokenRust().Fail(new FailRequest());
+                    break;
+                default:
+                    throw new ArgumentException($"incompatible probe target: {request.Target}");
+            }
+            return new ProbeBrokenServiceResult { ErrorMessage = "" };
+        }
+        catch (RpcException e)
+        {
+            return new ProbeBrokenServiceResult { ErrorMessage = e.Message };
+        }
     }
 }

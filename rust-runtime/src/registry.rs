@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::panic::{self, AssertUnwindSafe};
 
 use crate::error::RpcError;
 
@@ -36,14 +37,36 @@ impl ServiceRegistry {
         method_id: &str,
         request_bytes: &[u8],
     ) -> Result<Vec<u8>, RpcError> {
-        self.adapters
+        let adapter = self
+            .adapters
             .get(service_id)
-            .ok_or(RpcError::UnknownService)?
-            .invoke(method_id, request_bytes)
+            .ok_or(RpcError::UnknownService)?;
+
+        // A panic inside a service implementation must never unwind across
+        // the Godot Node.call() boundary. Instead, convert it into a normal
+        // `RpcError::Application`, same as an implementation that
+        // deliberately returns `Err(...)`.
+        panic::catch_unwind(AssertUnwindSafe(|| {
+            adapter.invoke(method_id, request_bytes)
+        }))
+        .unwrap_or_else(|payload| Err(RpcError::Application(panic_message(payload))))
     }
 
     pub fn registered_service_ids(&self) -> Vec<String> {
         self.adapters.keys().cloned().collect()
+    }
+}
+
+/// Extracts a human-readable message from a `std::panic::catch_unwind`
+/// payload, covering the two payload shapes the standard panic hook
+/// produces (`&str`` and `String`).
+fn panic_message(payload: Box<dyn std::any::Any + Send>) -> String {
+    if let Some(message) = payload.downcast_ref::<&str>() {
+        message.to_string()
+    } else if let Some(message) = payload.downcast_ref::<String>() {
+        message.clone()
+    } else {
+        "service implementation panicked".to_string()
     }
 }
 
@@ -56,6 +79,7 @@ mod tests {
         fn invoke(&self, method_id: &str, request_bytes: &[u8]) -> Result<Vec<u8>, RpcError> {
             match method_id {
                 "Echo" => Ok(request_bytes.to_vec()),
+                "Panic" => panic!("simulated panic"),
                 _ => Err(RpcError::UnknownMethod),
             }
         }
@@ -86,6 +110,24 @@ mod tests {
         assert_eq!(
             registry.dispatch("Echoer", "Nope", b""),
             Err(RpcError::UnknownMethod)
+        );
+    }
+
+    #[test]
+    fn panic_in_adapter_becomes_application_error() {
+        let mut registry = ServiceRegistry::new();
+        registry.register("Echoer", Box::new(EchoAdapter));
+
+        // Silence the default panic hook's stderr output for this
+        // deliberately-triggered panic.
+        let previous_hook = panic::take_hook();
+        panic::set_hook(Box::new(|_| {}));
+        let result = registry.dispatch("Echoer", "Panic", b"");
+        panic::set_hook(previous_hook);
+
+        assert_eq!(
+            result,
+            Err(RpcError::Application("simulated panic".to_string()))
         );
     }
 

@@ -8,11 +8,8 @@ impl ClockClient {
     pub fn new(rpc: godot_rosetta_rpc::RpcClient) -> Self {
         Self { rpc }
     }
-}
 
-impl Clock for ClockClient {
-
-    fn current_time(&self, request: protobuf_gen::rosetta::example::CurrentTimeRequest) -> protobuf_gen::rosetta::example::CurrentTimeResponse {
+    pub fn current_time(&self, request: protobuf_gen::rosetta::example::CurrentTimeRequest) -> Result<protobuf_gen::rosetta::example::CurrentTimeResponse, godot_rosetta_rpc::RpcError> {
         self.rpc.call(&ClockDescriptors::CURRENT_TIME, request)
     }
 

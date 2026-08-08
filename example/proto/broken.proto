@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package rosetta.example;
+
+option java_package = "rosetta.example";
+option java_multiple_files = true;
+
+message FailRequest {}
+
+message FailResponse {}
+
+// Deliberately fails every call, implemented in Rust. For testing error
+// propagation.
+service BrokenRust {
+  rpc Fail(FailRequest) returns (FailResponse);
+}
+
+// Deliberately fails every call, implemented in Kotlin. For testing error
+// propagation.
+service BrokenKotlin {
+  rpc Fail(FailRequest) returns (FailResponse);
+}
+
+// Deliberately fails every call, implemented in C#. For testing error
+// propagation.
+service BrokenCSharp {
+  rpc Fail(FailRequest) returns (FailResponse);
+}

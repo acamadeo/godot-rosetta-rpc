@@ -13,12 +13,21 @@ fun interface Invoker {
 }
 
 class RpcClient(private val invoker: Invoker) {
+  /**
+   * @throws RpcException if the call failed — at the transport/framework level (unknown
+   *   service/method, decode failure) or because the service implementation itself failed.
+   */
   fun <Req : Message, Resp : Message> call(
       descriptor: RpcMethodDescriptor<Req, Resp>,
       request: Req
   ): Resp {
     val responseBytes =
         invoker.invoke(descriptor.serviceId, descriptor.methodId, request.toByteArray())
-    return descriptor.responseParser.parseFrom(responseBytes)
+    val payload = Envelope.decode(responseBytes)
+    try {
+      return descriptor.responseParser.parseFrom(payload)
+    } catch (e: com.google.protobuf.InvalidProtocolBufferException) {
+      throw RpcException(RpcErrorCode.DECODE, e.message ?: "failed to decode response protobuf")
+    }
   }
 }

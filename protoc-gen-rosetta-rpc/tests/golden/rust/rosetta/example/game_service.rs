@@ -3,6 +3,6 @@
 // Godot objects are inherently single-threaded.
 pub trait GameService {
 
-    fn ping(&self, request: protobuf_gen::rosetta::example::PingRequest) -> protobuf_gen::rosetta::example::PingResponse;
+    fn ping(&self, request: protobuf_gen::rosetta::example::PingRequest) -> Result<protobuf_gen::rosetta::example::PingResponse, godot_rosetta_rpc::ServiceErr>;
 
 }
