@@ -8,7 +8,7 @@
 
     <IsPackable>true</IsPackable>
     <PackageId>GodotRosettaRpc</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>acamadeo</Authors>
     <Description>C# runtime (RpcMethodDescriptor, ServiceRegistry, RpcClient) for the godot-rosetta-rpc cross-language RPC framework.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
