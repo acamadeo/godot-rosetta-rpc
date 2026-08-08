@@ -69,8 +69,8 @@ pub struct RngServiceImpl {
 }
 
 impl RngService for RngServiceImpl {
-    fn next_uint64(&self, request: NextUint64Request) -> NextUint64Response {
-        NextUint64Response { value: self.rngs.get(request.system).nextUint64() }
+    fn next_uint64(&self, request: NextUint64Request) -> Result<NextUint64Response, ServiceErr> {
+        Ok(NextUint64Response { value: self.rngs.get(request.system).next_u64() })
     }
 }
 ```
@@ -161,7 +161,8 @@ See the [example/](example/) directory for a more fleshed-out example.
 
 1.  Implement each RPC service. Each `service Foo {}` from your proto will be exposed
     as an `interface Foo {}`, which can be implemented anywhere in your codebase. Within
-    a single service, every method must be implemented in the same language.
+    a single service, every method must be implemented in the same language. A method
+    reports failure by returning `Err`/throwing, depending on the language.
 
 1.  Link the service implementation through a `rpcimpls` module. This involves
     implementing the `ServiceImplementations` interface, which tells the language

@@ -48,12 +48,16 @@ struct ProfilerImpl {
 }
 
 impl Profiler for ProfilerImpl {
-    fn profile(&self, _request: ProfileRequest) -> ProfileResponse {
-        let millis = self.factory.clock().current_time(CurrentTimeRequest {}).millis;
-        ProfileResponse { message: format!("clock read {millis}ms") }
+    fn profile(&self, _request: ProfileRequest) -> Result<ProfileResponse, ServiceErr> {
+        let millis = self.factory.clock().current_time(CurrentTimeRequest {})?.millis;
+        Ok(ProfileResponse { message: format!("clock read {millis}ms") })
     }
 }
 ```
+
+Return `ServiceErr::msg("...")` (a shorthand for `Err(ServiceErr::new("..."))`)
+to report a failure; it's reported to the caller as an `Application` error (see
+[Error handling](#error-handling)). You can also return errors from other crates or use the `?` operator, and the error will be automatically converted into `ServiceErr`.
 
 ## Register an RPC service
 
@@ -97,7 +101,7 @@ impl INode for MyNode {
         let rpc = godot_rosetta_rpc::godot_support::make_rpc_client(node, None);
         let services = GeneratedServiceFactory::new(rpc);
         let response = services.profiler().profile(ProfileRequest {});
-        godot_print!("{}", response.message);
+        godot_print!("{}", response?.message);
     }
 }
 ```
@@ -105,3 +109,21 @@ impl INode for MyNode {
 To call one service from another's implementation, reuse the
 `GeneratedServiceFactory` passed into your constructor (see above) instead of
 building a new one.
+
+## Error handling
+
+Every RPC call can fail with an `RpcError`:
+
+- `UnknownService` / `UnknownMethod` — no service/method is registered for
+  the id the client called with.
+- `Decode` — the request or response protobuf failed to decode.
+- `Application(String)` — the service implementation itself failed: it
+  returned `Err(...)`, or it panicked. A panic inside a service
+  implementation is caught by `ServiceRegistry::dispatch` and converted to
+  `Application` rather than unwinding across the Godot boundary.
+
+Generated service trait methods don't return `RpcError` directly; they return
+`Result<Resp, ServiceErr>`. `ServiceErr` implements a blanket
+`From<E: std::error::Error>`, so `?` converts any standard error — including
+another service call's `RpcError` — into `ServiceErr` automatically. On the
+wire, a returned `ServiceErr` becomes `RpcError::Application`.

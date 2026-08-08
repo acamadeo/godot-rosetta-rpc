@@ -50,6 +50,9 @@ public class BuzzerImpl : IBuzzer
 }
 ```
 
+A method reports failure by throwing an exception (of any type). The exception will be propagated as an `RpcException`
+with `RpcErrorCode.Application` (see [Error handling](#error-handling)).
+
 ## Register an RPC service
 
 Every service implemented in C# must be linked through a single
@@ -83,8 +86,21 @@ public partial class MyNode : Node2D
     public override void _Ready()
     {
         var services = new GeneratedServiceFactory(GodotSupport.MakeRpcClient(this));
+
+        // Without error handling.
         var response = services.Buzzer().Ping(new PingRequest { Message = "hello" });
         GD.Print(response.Message);
+
+        // With error handling.
+        try
+        {
+            var response = services.Buzzer().Ping(new PingRequest { Message = "hello" });
+            GD.Print(response.Message);
+        }
+        catch (RpcException e)
+        {
+            GD.PrintErr($"Ping failed ({e.Code}): {e.Message}");
+        }
     }
 }
 ```
@@ -92,3 +108,15 @@ public partial class MyNode : Node2D
 To call one service from another's implementation, reuse the
 `GeneratedServiceFactory` passed into your constructor (see above) instead of
 building a new one.
+
+## Error handling
+
+`RpcClient.Call` throws `RpcException` when a call fails. `RpcException.Code`
+is an `RpcErrorCode`:
+
+- `UnknownService` / `UnknownMethod` — no service/method is registered for
+  the id the client called with.
+- `Decode` — the request or response protobuf failed to decode.
+- `Application` — the service implementation itself failed: it threw, or an
+  otherwise-uncaught exception was caught on its behalf by
+  `GodotSupport.DispatchBytes`.
